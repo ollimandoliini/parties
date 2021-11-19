@@ -24,7 +24,12 @@ source-repository head
 
 library
   exposed-modules:
+      App
+      Auth
+      Database
+      Invites
       Lib
+      Parties
   other-modules:
       Paths_parties_backend
   hs-source-dirs:
@@ -32,7 +37,15 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , bytestring
+    , either
+    , monad-logger
+    , mtl
+    , persistent
+    , persistent-postgresql
+    , servant
     , servant-server
+    , text
     , wai
     , warp
   default-language: Haskell2010
@@ -45,8 +58,16 @@ executable parties-backend-exe
   build-depends:
       aeson
     , base
+    , bytestring
+    , either
+    , monad-logger
+    , mtl
     , parties-backend
+    , persistent
+    , persistent-postgresql
+    , servant
     , servant-server
+    , text
     , wai
     , warp
   default-language: Haskell2010
@@ -62,11 +83,19 @@ test-suite parties-backend-test
   build-depends:
       aeson
     , base
+    , bytestring
+    , either
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , monad-logger
+    , mtl
     , parties-backend
+    , persistent
+    , persistent-postgresql
+    , servant
     , servant-server
+    , text
     , wai
     , warp
   default-language: Haskell2010
