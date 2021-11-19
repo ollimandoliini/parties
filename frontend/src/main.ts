@@ -1,23 +1,21 @@
-import { createApp, h } from 'vue'
-import { createRouter, createWebHashHistory } from 'vue-router';
-import App from './App.vue'
-
-
-const Home = { template: '<div>Home</div>' }
-const About = { template: '<div>About</div>' }
+import { createApp, h } from "vue";
+import { createRouter, createWebHashHistory } from "vue-router";
+import App from "./App.vue";
+import Home from "./components/Home.vue";
+import About from "./components/About.vue";
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
-]
+  { path: "/", component: Home },
+  { path: "/about", component: About },
+];
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
-})
+});
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(router)
+app.use(router);
 
-app.mount('#app')
+app.mount("#app");
