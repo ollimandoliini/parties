@@ -27,9 +27,10 @@ library
       App
       Auth
       Database
-      Invites
       Lib
-      Parties
+      Resources.Events
+      Resources.Invites
+      Resources.User
   other-modules:
       Paths_parties_backend
   hs-source-dirs:
@@ -38,15 +39,26 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , either
+    , esqueleto
+    , http-conduit
+    , jose
+    , lens
     , monad-logger
     , mtl
+    , password
     , persistent
     , persistent-postgresql
+    , random
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-server
     , text
+    , unordered-containers
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010
 
@@ -59,16 +71,27 @@ executable parties-backend-exe
       aeson
     , base
     , bytestring
+    , containers
     , either
+    , esqueleto
+    , http-conduit
+    , jose
+    , lens
     , monad-logger
     , mtl
     , parties-backend
+    , password
     , persistent
     , persistent-postgresql
+    , random
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-server
     , text
+    , unordered-containers
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010
 
@@ -84,18 +107,29 @@ test-suite parties-backend-test
       aeson
     , base
     , bytestring
+    , containers
     , either
+    , esqueleto
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , http-conduit
+    , jose
+    , lens
     , monad-logger
     , mtl
     , parties-backend
+    , password
     , persistent
     , persistent-postgresql
+    , random
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-server
     , text
+    , unordered-containers
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010

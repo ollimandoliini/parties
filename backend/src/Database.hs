@@ -22,23 +22,32 @@ share
     , mkMigrate "migrateAll"
     ] [persistLowerCase|
 
-Party json
+User json
     name Text
+    passwordHash Text
+    email Text
+    UniqueEmail email
+    deriving Show Eq
+
+Event json
+    name Text
+    organizer UserId
     description Text
+    invite 
     deriving Show Eq
 
 Invite json
-    party PartyId
-    invitee [ParticipantId]
+    event EventId
+    code Text
     deriving Show Eq
 
-Participant json
-    name Text
+Invitee json
     invite InviteId
+    name Text
     deriving Show Eq
-
 |]
 
 doMigrations :: SqlPersistT IO ()
 doMigrations = do
     runMigration migrateAll
+

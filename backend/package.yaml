@@ -32,6 +32,18 @@ dependencies:
 - persistent-postgresql
 - text
 - monad-logger
+- servant-auth
+- servant-auth-server
+- password
+- wai-cors
+- esqueleto
+- jose
+- containers
+- random
+- http-conduit
+- lens
+- unordered-containers
+
 
 
 library:

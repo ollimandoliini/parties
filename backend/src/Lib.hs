@@ -1,87 +1,129 @@
-{-# LANGUAGE DataKinds       #-}
-{-# LANGUAGE TypeOperators   #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Lib
-    ( startApp
-    , app
-    ) where
+  ( startApp,
+    app,
+  )
+where
 
+-- import Invites
+-- import Auth
+
+import App
+import Control.Monad.Except
+import Control.Monad.IO.Class
+import Control.Monad.Logger (runStdoutLoggingT)
+import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, lift, runReaderT)
 import Data.Aeson
-import Data.Aeson.TH ( deriveJSON )
+import Data.Aeson.TH (deriveJSON)
+import qualified Data.ByteString as BS
+import Data.ByteString.Lazy.Char8 (unpack)
+import Data.Maybe (fromMaybe)
+import Data.Proxy
+import Database (doMigrations)
+import Database.Persist.Postgresql
+  ( ConnectionPool,
+    ConnectionString,
+    createPostgresqlPool,
+  )
+import Database.Persist.Sql (SqlPersistT, runMigration, runSqlPool)
+import GHC.Generics
 import Network.Wai
+    ( Application, Request(requestHeaders), Middleware )
 import Network.Wai.Handler.Warp
+import Resources.Events
 import Servant
 import Servant.Server
-
-import Data.Proxy
-import Control.Monad.IO.Class
-
-import Control.Monad.Reader (ReaderT, runReaderT, lift, MonadReader, MonadIO, asks)
-import Control.Monad.Except         
-
 import System.Environment (lookupEnv)
+import qualified Database as DB
+import Database.Persist
+import Data.Text (Text)
+import Network.Wai.Middleware.Cors
 
-import qualified Data.ByteString as BS
-import Database.Persist.Postgresql
-       (ConnectionPool, ConnectionString, createPostgresqlPool)
+import Servant.Auth.Server
+import Auth (Login, JWTClaim(claimEmail))
 
-import Database.Persist.Sql (SqlPersistT, runMigration, runSqlPool)
+import Crypto.JOSE.JWK ( JWK )
+import Debug.Trace (trace)
+import Crypto.JOSE (JWKSet)
+import Network.HTTP.Simple (httpJSON, Response)
+import Network.HTTP.Client.Conduit (responseBody)
 
-import Data.Maybe (fromMaybe)
-import           Control.Monad.Logger        (runStdoutLoggingT)
+type Protected = PartiesAPI
 
-import Invites
-import Auth
-import Parties
+protected :: Servant.Auth.Server.AuthResult JWTClaim -> ServerT Protected (AppT IO)
+protected (Servant.Auth.Server.Authenticated claim) = eventsHandler (claimEmail claim)
+protected x = trace ("here:" <> show x) throwAll err401
 
-import Database (doMigrations)
-import App
+type Unprotected = Raw
 
 
+unprotected :: CookieSettings -> JWTSettings -> ServerT Unprotected (AppT IO)
+unprotected cs jwts = serveDirectoryFileServer "frontend"
+
+type API = (Auth '[JWT] JWTClaim :> Protected) :<|> Unprotected
+
+server :: CookieSettings -> JWTSettings -> ServerT API (AppT IO)
+server cs jwts = protected :<|> unprotected cs jwts
 
 convertApp :: Config -> AppT IO a -> Handler a
 convertApp cfg app = Handler $ runReaderT (runApp app) cfg
 
 
-type PartyAPI = InvitesAPI :<|> EnrollmentAPI :<|> PartiesAPI
+api' :: Proxy API
+api' = Proxy
 
-api :: Proxy PartyAPI
-api = Proxy
-
-
-appToServer :: Config -> Server PartyAPI
-appToServer cfg = hoistServerWithContext api (Proxy :: Proxy '[BasicAuthCheck User]) (convertApp cfg) server
-
-app :: Config -> Application
-app cfg = serveWithContext api ctx (appToServer cfg)
-  where
-    ctx :: Context '[BasicAuthCheck User]
-    ctx = authCheck (adminUser cfg) (adminPassword cfg) :. EmptyContext
+appToServer :: Config -> CookieSettings -> JWTSettings -> Server API
+appToServer appCfg cookieSettings jwtSettings =
+  hoistServerWithContext api' (Proxy :: Proxy '[CookieSettings, JWTSettings]) (convertApp appCfg) (server cookieSettings jwtSettings)
 
 
-server :: ServerT PartyAPI (AppT IO)
-server = inviteHandler :<|> enrollmentHandler :<|> partiesHandler
+corsPolicy :: Middleware
+corsPolicy = cors (const $ Just policy)
+    where
+      policy = simpleCorsResourcePolicy
+        { corsRequestHeaders = ["Authorization", "Content-Type"]
+        , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH", "DELETE"] }
 
+app :: Config -> JWK -> JWKSet -> Application
+app cfg key jwkSet =
+  let jwtCfg = (defaultJWTSettings key) {validationKeys = jwkSet}
+      cookieSettings = defaultCookieSettings {cookieIsSecure = NotSecure, cookieXsrfSetting = Nothing}
+      cfg' = cookieSettings :. jwtCfg :. EmptyContext
+  in corsPolicy $ serveWithContext api' cfg' (appToServer cfg cookieSettings jwtCfg)
 
-
+debug :: Middleware
+debug app req resp = do { putStrLn "Request headers:" ; print (requestHeaders req) ; app req resp }
 
 makePool :: BS.ByteString -> IO ConnectionPool
 makePool dbString = runStdoutLoggingT (createPostgresqlPool dbString 1)
 
+
+getJwk :: IO JWKSet
+getJwk = responseBody <$> httpJSON jwkUrl
+  where
+    jwkUrl = "https://dev-7xdjfw10.eu.auth0.com/.well-known/jwks.json"
+
+
 startApp :: IO ()
 startApp = do
-  !dbString <- lookupSetting "DB_CONNECTION_STRING" "host=localhost port=5432 user=user password=password dbname=parties"
-  !adminUser <- lookupSetting "ADMIN_USER" "olli"
-  !adminPw <- lookupSetting "ADMIN_PASSWORD" "yeahyeah"
+  !dbString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString
+  !key <- generateKey
+  !jwkSet <- getJwk
   pool <- makePool dbString
-  let cfg = Config pool adminUser adminPw
+  let cfg = Config pool
+      port = 8080
   runSqlPool doMigrations pool
-  run 8080 (app cfg)
-
+  putStrLn $ "App running in port: " ++ show port
+  run port (debug $ app cfg key jwkSet)
+  where
+    defaultConnectionString = "host=localhost port=5432 user=user password=password dbname=parties"
 
 lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env def = do
-    p <- lookupEnv env
-    return $ maybe def read p
+  p <- lookupEnv env
+  return $ maybe def read p

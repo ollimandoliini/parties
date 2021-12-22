@@ -9,10 +9,10 @@ import Servant (ServerError)
 import Database.Persist.Postgresql
        (ConnectionPool, ConnectionString, createPostgresqlPool)
 
+import Control.Applicative
+
 data Config = Config {
   dbPool :: ConnectionPool
-  , adminUser :: BS.ByteString
-  , adminPassword :: BS.ByteString
 } deriving (Show)
 
 newtype AppT m a
