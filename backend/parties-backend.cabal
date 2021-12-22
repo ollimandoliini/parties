@@ -28,9 +28,8 @@ library
       Auth
       Database
       Lib
-      Resources.Events
-      Resources.Invites
-      Resources.User
+      Resources.Event
+      Types
   other-modules:
       Paths_parties_backend
   hs-source-dirs:

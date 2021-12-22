@@ -22,18 +22,10 @@ share
     , mkMigrate "migrateAll"
     ] [persistLowerCase|
 
-User json
-    name Text
-    passwordHash Text
-    email Text
-    UniqueEmail email
-    deriving Show Eq
-
 Event json
     name Text
-    organizer UserId
+    organizer Text
     description Text
-    invite 
     deriving Show Eq
 
 Invite json

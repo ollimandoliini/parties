@@ -7,14 +7,14 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module Resources.Events where
+module Resources.Event where
 
 import App
 import Auth
 import Control.Monad ( forM_, guard, replicateM)
 import Control.Monad.Reader (MonadIO (liftIO), ask, asks)
-import Data.Aeson
-import Data.Map hiding (insert)
+import Data.Aeson ( FromJSON, ToJSON )
+import Data.Map ( fromListWith, toList )
 import Data.Text ( Text, pack )
 import Data.Void
 import qualified Database (Event (..))
@@ -25,23 +25,9 @@ import Database.Persist.Sql (fromSqlKey, runSqlPool, toSqlKey)
 import GHC.Generics hiding (from)
 import System.Random ( randomRIO )
 import Servant
+import Types
 
 
-
-data Event = Event
-  { name :: Text,
-    description :: Text
-  }
-  deriving (Show, Eq, Generic)
-
-instance FromJSON Event
-
-instance ToJSON Event
-
-
-
-       
-type Email = Text
 
 
 type PartiesAPI =
@@ -65,12 +51,6 @@ eventsHandler email =
     :<|> getUserEvents email
     :<|> (\int -> getEvent email int :<|> deleteEventHandler email int:<|> invitesHandler email int)
 
-newtype EventId = EventId {id :: Int} deriving (Generic)
-
-instance FromJSON EventId
-
-instance ToJSON EventId
-
 or404 :: AppT IO (Maybe b) -> AppT IO b
 or404 res = res >>= maybe (throwError err404) pure
 
@@ -85,11 +65,10 @@ getUserEvents :: Email -> AppT IO [Event]
 getUserEvents email = do
   pool <- asks dbPool
   let query = select $ do
-        (event :& user) <-
+        event <-
           from $
-            table @DB.Event `innerJoin` table @DB.User
-              `on` (\(event :& user) -> (event ^. DB.EventOrganizer) ==. (user ^. DB.UserId))
-        where_ $ user ^. DB.UserEmail ==. val email
+            table @DB.Event
+        where_ $ event ^. DB.EventOrganizer  ==. val email
         return event
   result <- liftIO $ runSqlPool query pool
   return $ dbEventToApiEvent <$> result
@@ -100,13 +79,9 @@ dbEventToApiEvent (Entity _ event) = Event (DB.eventName event) (DB.eventDescrip
 createEventHandler :: Email -> Event -> AppT IO EventId
 createEventHandler email party = do
   pool <- asks dbPool
-  mUser <- liftIO $ runSqlPool (getBy (DB.UniqueEmail email)) pool
-  case mUser of
-    Just (Entity id _) -> do
-      let newEvent = Database.Event (name party) id (description party)
-      partyId <- liftIO $ runSqlPool (insert newEvent) pool
-      return $ EventId $ fromIntegral $ fromSqlKey partyId
-    Nothing -> throwError err500 -- We should never get here
+  let newEvent = Database.Event (name party) email (description party)
+  partyId <- liftIO $ runSqlPool (insert newEvent) pool
+  return $ EventId $ fromIntegral $ fromSqlKey partyId
 
 deleteEventHandler :: Email -> Int -> AppT IO ()
 deleteEventHandler email eventId = do
@@ -121,8 +96,7 @@ checkEventOrganizer :: Text -> Int -> AppT IO ()
 checkEventOrganizer email eventId = do
   pool <- asks dbPool
   DB.Event{ eventOrganizer } <- or404 . liftIO $ runSqlPool (get eventIdKey) pool
-  DB.User{ userEmail } <- or404 . liftIO $ runSqlPool (get eventOrganizer) pool
-  if userEmail == email
+  if eventOrganizer == email
     then return ()
     else throwError err401
   where
@@ -130,12 +104,6 @@ checkEventOrganizer email eventId = do
     eventIdKey = toSqlKey $ fromIntegral eventId
 
 
-
-data Invite = Invite {
-  code :: Text
-  , invitees :: [Text]
-} deriving (Show, Eq, Generic)
-instance ToJSON Invite
 
 type InvitesAPI = Get '[JSON] [Invite] 
                   :<|> ReqBody '[JSON] [Text] :> Post '[JSON] Int
@@ -149,7 +117,7 @@ getEventInvites email eventId = do
   pool <- asks dbPool
   checkEventOrganizer email eventId
   let inviteQuery = select $ do
-              ((event :& invite) :& invitee) <- from $ table @DB.Event
+              event :& invite :& invitee <- from $ table @DB.Event
                 `innerJoin` table @DB.Invite
                 `on` (\(event :& invite) -> (event ^. DB.EventId) ==. (invite ^. DB.InviteEvent))
                 `innerJoin` table @DB.Invitee

@@ -2,14 +2,13 @@
 module App where
 
 import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks)
-import Control.Monad.Except         
+import Control.Monad.Except ( MonadIO, MonadError, ExceptT )         
 import qualified Data.ByteString as BS
 
 import Servant (ServerError)
 import Database.Persist.Postgresql
        (ConnectionPool, ConnectionString, createPostgresqlPool)
 
-import Control.Applicative
 
 data Config = Config {
   dbPool :: ConnectionPool

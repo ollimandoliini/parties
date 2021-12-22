@@ -35,7 +35,7 @@ import GHC.Generics
 import Network.Wai
     ( Application, Request(requestHeaders), Middleware )
 import Network.Wai.Handler.Warp
-import Resources.Events
+import Resources.Event
 import Servant
 import Servant.Server
 import System.Environment (lookupEnv)
@@ -45,7 +45,7 @@ import Data.Text (Text)
 import Network.Wai.Middleware.Cors
 
 import Servant.Auth.Server
-import Auth (Login, JWTClaim(claimEmail))
+import Auth (JWTClaim(claimEmail))
 
 import Crypto.JOSE.JWK ( JWK )
 import Debug.Trace (trace)

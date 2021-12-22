@@ -4,38 +4,27 @@
 
 module Auth where
 
-import App
-import Control.Lens
+import Control.Lens ( (^.) )
 import Control.Monad.Reader (asks)
 import Control.Monad.Trans (liftIO)
 import qualified Crypto.JWT as Jose
-import Data.Aeson
+import Data.Aeson ( fromJSON, Result(Success, Error), ToJSON )
 import Data.ByteString.Lazy (toStrict)
 import qualified Data.HashMap.Strict as KM
-import Data.Password.Bcrypt
-import Data.Text
-import Data.Text.Encoding
+import Data.Text ( Text, pack )
 import qualified Database as DB
-import Database.Persist
 import Database.Persist.Postgresql (runSqlPool)
 import Debug.Trace (trace)
-import GHC.Generics
-import Servant
-  ( Header,
-    NoContent (NoContent),
-    err401,
-    throwError,
-  )
+import GHC.Generics ( Generic )
+import Servant( Header, NoContent (NoContent), err401, throwError)
 import Servant.API (Headers)
-import Servant.Auth.Server
+import Servant.Auth.Server ( FromJWT(..), ToJWT )
 
-newtype JWTClaim = JWTClaim
-  { claimEmail :: Text
-  }
-  deriving (Show, Generic)
+newtype JWTClaim = JWTClaim {
+    claimEmail :: Text
+  } deriving (Show, Generic)
 
 instance ToJSON JWTClaim
-
 instance ToJWT JWTClaim
 
 instance FromJWT JWTClaim where
@@ -44,13 +33,3 @@ instance FromJWT JWTClaim where
     Just v -> case fromJSON v of
       Error e -> Left $ pack e
       Success a -> Right $ JWTClaim a
-
-data Login = Login
-  { email :: Text,
-    password :: Text
-  }
-  deriving (Eq, Show, Read, Generic)
-
-instance ToJSON Login
-
-instance FromJSON Login
