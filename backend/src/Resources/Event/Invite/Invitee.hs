@@ -44,7 +44,7 @@ getInvitee :: Email -> EventId -> InviteId -> InviteeId -> AppT IO Invitee
 getInvitee email eventId _ (InviteeId inviteeId) = do
   checkEventOrganizer email eventId
   pool <- asks dbPool
-  DB.Invitee{..} <- or404 . liftIO $ runSqlPool (get $ toSqlKey $ fromIntegral inviteeId) pool
+  DB.Invitee{..} <- or404 . liftIO $ runSqlPool (get $ toSqlKey inviteeId) pool
   return Invitee {
     name = inviteeName
     , status = inviteeStatus
@@ -56,7 +56,7 @@ getInvitees email eventId (InviteId inviteId)  = do
   pool <- asks dbPool
   let query = select $ do
       event <- from $ table @DB.Invitee
-      where_ $ event ^. DB.InviteeInvite  ==. val (toSqlKey @DB.Invite $ fromIntegral inviteId)
+      where_ $ event ^. DB.InviteeInvite  ==. val (toSqlKey @DB.Invite inviteId)
       return event
   liftIO $ (fmap . fmap) dbInviteeToApiInvitee (runSqlPool query pool)
 
@@ -72,11 +72,11 @@ postInvitee email eventId (InviteId inviteId) inviteeName = do
   checkEventOrganizer email eventId
   pool <- asks dbPool
   let newInvitee = DB.Invitee {
-    DB.inviteeInvite = toSqlKey $ fromIntegral inviteId
+    DB.inviteeInvite = toSqlKey inviteId
     , DB.inviteeName = inviteeName
     , DB.inviteeStatus = Unknown
   }
-  InviteeId . fromIntegral . fromSqlKey <$> liftIO (runSqlPool (insert newInvitee) pool)
+  InviteeId . fromSqlKey <$> liftIO (runSqlPool (insert newInvitee) pool)
 
 
 putInvitee :: Email -> EventId -> InviteId -> InviteeId -> Invitee -> AppT IO NoContent
@@ -84,11 +84,11 @@ putInvitee email eventId (InviteId inviteId) (InviteeId inviteeId) Invitee{..} =
   checkEventOrganizer email eventId
   pool <- asks dbPool
   let newInvitee = DB.Invitee {
-    DB.inviteeInvite = toSqlKey $ fromIntegral inviteId
+    DB.inviteeInvite = toSqlKey inviteId
     , DB.inviteeName = name
     , DB.inviteeStatus = status
     }
-      query = replace (toSqlKey $ fromIntegral inviteeId) newInvitee
+      query = replace (toSqlKey inviteeId) newInvitee
   liftIO $ runSqlPool query pool
   return NoContent
 
@@ -97,6 +97,6 @@ deleteInvitee :: Email -> EventId -> InviteId -> InviteeId -> AppT IO NoContent
 deleteInvitee email eventId _ (InviteeId inviteeId) = do
   checkEventOrganizer email eventId
   pool <- asks dbPool
-  let query = P.delete (toSqlKey @DB.Invitee $ fromIntegral inviteeId)
+  let query = P.delete (toSqlKey @DB.Invitee inviteeId)
   liftIO $ runSqlPool query pool
   return NoContent

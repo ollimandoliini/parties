@@ -21,25 +21,25 @@ import Utils (checkEventOrganizer, or404)
 -- EVENTS
 
 type PostEvent = ReqBody '[JSON] Event :> Post '[JSON] EventId
-type GetUserEvents = Get '[JSON] [WithId Event]
+type GetEvents = Get '[JSON] [WithId Event]
 type GetEvent = Capture "eventId" EventId :> Get '[JSON] Event
 type DeleteEvent = Capture "eventId" EventId :> Delete '[JSON] NoContent
 type Invites = Capture "eventId" EventId :> "invites" :> InvitesAPI
 
 
 type EventsAPI
-  = PostEvent
-  :<|> GetUserEvents
-  :<|> GetEvent
+  = GetEvent
+  :<|> GetEvents
+  :<|> PostEvent
   :<|> DeleteEvent
   :<|> Invites
 
 
 eventsHandler :: Email -> ServerT EventsAPI (AppT IO)
 eventsHandler email
-  = createEventHandler email
+  = getEvent email
   :<|> getUserEvents email
-  :<|> getEvent email
+  :<|> postEvent email
   :<|> deleteEventHandler email
   :<|> invitesHandler email
 
@@ -48,7 +48,7 @@ getEvent :: Email -> EventId -> AppT IO Event
 getEvent email (EventId eventId) = do
   checkEventOrganizer email (EventId eventId)
   pool <- asks dbPool
-  event <- or404 . liftIO $ runSqlPool (get $ toSqlKey $ fromIntegral eventId) pool
+  event <- or404 . liftIO $ runSqlPool (get $ toSqlKey eventId) pool
   return Event {
     name = DB.eventName event
     , description = DB.eventDescription event
@@ -76,7 +76,7 @@ dbEventToApiEvent (Entity id' event) =
     , startTime = DB.eventStartTime event
     , location = DB.eventLocation event
     }
-  in WithId (fromIntegral $ fromSqlKey id') event'
+  in WithId (fromSqlKey id') event'
 
 apiEventToDbEvent :: Event -> Email -> DB.Event
 apiEventToDbEvent Event{..} (Email email) = DB.Event {
@@ -88,11 +88,11 @@ apiEventToDbEvent Event{..} (Email email) = DB.Event {
 }
 
 
-createEventHandler :: Email -> Event -> AppT IO EventId
-createEventHandler email event = do
+postEvent :: Email -> Event -> AppT IO EventId
+postEvent email event = do
   pool <- asks dbPool
   eventId <- liftIO $ runSqlPool (insert $ apiEventToDbEvent event email) pool
-  return $ EventId $ fromIntegral $ fromSqlKey eventId
+  return $ EventId $ fromSqlKey eventId
 
 deleteEventHandler :: Email -> EventId -> AppT IO NoContent
 deleteEventHandler email (EventId eventId) = do
@@ -102,5 +102,5 @@ deleteEventHandler email (EventId eventId) = do
   return NoContent
   where
     eventIdKey :: Key DB.Event
-    eventIdKey = toSqlKey $ fromIntegral eventId
+    eventIdKey = toSqlKey eventId
 

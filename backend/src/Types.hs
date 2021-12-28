@@ -15,8 +15,9 @@ import Data.Aeson.TH (defaultOptions)
 import Data.Time (UTCTime)
 import Database.Persist.TH (derivePersistField)
 import Servant (FromHttpApiData)
+import Data.Int (Int64)
 
-data WithId a = WithId Int a
+data WithId a = WithId Int64 a
   deriving (Show, Eq)
 
 instance ToJSON a => ToJSON (WithId a) where
@@ -40,7 +41,7 @@ instance HasJSONOptions Event where
 newtype Email = Email Text
 
 newtype EventId = EventId
-  { id :: Int}
+  { id :: Int64}
   deriving (Generic, FromHttpApiData)
 
 instance FromJSON EventId
@@ -52,7 +53,7 @@ data Invite = Invite {
 } deriving (Show, Eq, Generic)
 
 newtype InviteId = InviteId {
-  id :: Int
+  id :: Int64
   } deriving (Generic, FromHttpApiData)
 
 instance FromJSON InviteId
@@ -64,7 +65,7 @@ data Invitee = Invitee {
 } deriving (Show, Eq, Generic)
 
 newtype InviteeId = InviteeId {
-   id :: Int
+   id :: Int64
   } deriving (Generic, FromHttpApiData)
 
 instance FromJSON InviteeId

@@ -56,7 +56,7 @@ getEventInvites = do
                 `leftJoin` table @DB.Invitee
                 `on` (\(_ :& invite :& invitees) -> 
                     just (invite ^. DB.InviteId) ==. (invitees ?. DB.InviteeInvite))
-              where_ $ event ^. DB.EventId ==. val (toSqlKey $ fromIntegral eventId)
+              where_ $ event ^. DB.EventId ==. val (toSqlKey eventId)
               return (invite :& invitee)
   invites <- liftIO $ runSqlPool inviteQuery pool
   return $ groupInvites invites
@@ -71,17 +71,17 @@ postEventInvite email (EventId eventId) = do
   pool <- asks dbPool
   inviteCode <- generateNewInviteCode
   let newInvite = DB.Invite {
-    DB.inviteEvent = toSqlKey $ fromIntegral eventId
+    DB.inviteEvent = toSqlKey eventId
     , DB.inviteCode = inviteCode
     }
   inviteId <- liftIO $ runSqlPool (insert newInvite) pool
-  return $ InviteId $ fromIntegral $ fromSqlKey inviteId
+  return $ InviteId $ fromSqlKey inviteId
 
 deleteInvite :: Email -> EventId -> InviteId -> AppT IO NoContent
 deleteInvite email (EventId eventId) (InviteId inviteId) = do 
   checkEventOrganizer email (EventId eventId)
   pool <- asks dbPool
-  let query = P.delete (toSqlKey @DB.Invite $ fromIntegral inviteId)
+  let query = P.delete (toSqlKey @DB.Invite inviteId)
   liftIO $ runSqlPool query pool
   return NoContent
 
