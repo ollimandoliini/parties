@@ -1,15 +1,27 @@
 import { useAuth0 } from "@auth0/auth0-react";
+import { Button } from "@chakra-ui/react";
 import React from "react";
 import { Outlet } from "react-router-dom";
 import "./App.css";
 
 const App = () => {
-   const {loginWithRedirect} = useAuth0()
+  const { loginWithRedirect, logout, isAuthenticated } = useAuth0();
   return (
     <div className="page-wrap">
       <div className="page-header">
-        <button onClick={() => loginWithRedirect({redirectUri: "/me"})}>Login</button>
-        <h1>Moro</h1>
+        {!isAuthenticated ? (
+          <Button
+            onClick={() =>
+              loginWithRedirect({ redirectUri: "http://localhost:3000/me" })
+            }
+          >
+            Login
+          </Button>
+        ) : (
+          <Button onClick={() => logout({ returnTo: window.location.origin })}>
+            Logout
+          </Button>
+        )}
       </div>
       <div className="page-main">
         <Outlet />

@@ -14,7 +14,8 @@ const useApi = () => {
   );
   useEffect(() => {
     if (api.current) {
-      const requestInterceptorId = api.current.interceptors.request.use(
+      const currentApi = api.current
+      const requestInterceptorId = currentApi.interceptors.request.use(
         async (config) => {
           const token = await getAccessTokenSilently();
           if (config && config.headers) {
@@ -25,7 +26,7 @@ const useApi = () => {
         }
       );
 
-      const responseInterceptorId = api.current.interceptors.response.use(
+      const responseInterceptorId = currentApi.interceptors.response.use(
         undefined,
         async (error) => {
           if (error.config && error.response && error.response.status === 401) {
@@ -38,8 +39,8 @@ const useApi = () => {
         }
       );
       return () => {
-        api.current.interceptors.request.eject(requestInterceptorId);
-        api.current.interceptors.response.eject(responseInterceptorId);
+        currentApi.interceptors.request.eject(requestInterceptorId);
+        currentApi.interceptors.response.eject(responseInterceptorId);
       };
     }
   });
