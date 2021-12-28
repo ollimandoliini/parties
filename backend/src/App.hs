@@ -1,16 +1,13 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module App where
 
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks)
-import Control.Monad.Except ( MonadIO, MonadError, ExceptT )         
-import qualified Data.ByteString as BS
+import           Control.Monad.Except        (ExceptT, MonadError, MonadIO)
+import           Control.Monad.Reader        (MonadReader, ReaderT)
 
-import Servant (ServerError)
-import Database.Persist.Postgresql
-       (ConnectionPool, ConnectionString, createPostgresqlPool)
+import           Database.Persist.Postgresql (ConnectionPool)
+import           Servant                     (ServerError)
 
-
-data Config = Config {
+newtype Config = Config {
   dbPool :: ConnectionPool
 } deriving (Show)
 

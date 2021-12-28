@@ -1,8 +1,9 @@
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 
 module Lib
   ( startApp,
@@ -10,60 +11,50 @@ module Lib
   )
 where
 
--- import Invites
--- import Auth
+import           App
+import           Control.Monad.Logger                      (runStdoutLoggingT)
+import           Control.Monad.Reader                      (runReaderT)
+import qualified Data.ByteString                           as BS
+import           Database                                  (doMigrations)
+import           Database.Persist.Postgresql               (ConnectionPool,
+                                                            createPostgresqlPool)
+import           Database.Persist.Sql                      (runSqlPool)
+import           Network.Wai                               (Middleware,
+                                                            Request (requestHeaders))
+import           Network.Wai.Handler.Warp                  (run)
+import           Network.Wai.Middleware.Cors               (CorsResourcePolicy (corsMethods, corsRequestHeaders),
+                                                            cors,
+                                                            simpleCorsResourcePolicy)
+import           Resources.Event
+import           Servant
+import           System.Environment                        (lookupEnv)
 
-import App
-import Control.Monad.Except
-import Control.Monad.IO.Class
-import Control.Monad.Logger (runStdoutLoggingT)
-import Control.Monad.Reader (MonadIO, MonadReader, ReaderT, asks, lift, runReaderT)
-import Data.Aeson
-import Data.Aeson.TH (deriveJSON)
-import qualified Data.ByteString as BS
-import Data.ByteString.Lazy.Char8 (unpack)
-import Data.Maybe (fromMaybe)
-import Data.Proxy
-import Database (doMigrations)
-import Database.Persist.Postgresql
-  ( ConnectionPool,
-    ConnectionString,
-    createPostgresqlPool,
-  )
-import Database.Persist.Sql (SqlPersistT, runMigration, runSqlPool)
-import GHC.Generics
-import Network.Wai
-    ( Application, Request(requestHeaders), Middleware )
-import Network.Wai.Handler.Warp
-import Resources.Event
-import Servant
-import Servant.Server
-import System.Environment (lookupEnv)
-import qualified Database as DB
-import Database.Persist
-import Data.Text (Text)
-import Network.Wai.Middleware.Cors
+import           Auth                                      (JWTClaim (claimEmail))
+import           Servant.Auth.Server
 
-import Servant.Auth.Server
-import Auth (JWTClaim(claimEmail))
+import           Crypto.JOSE                               (JWKSet)
+import           Crypto.JOSE.JWK                           (JWK)
+import           Network.HTTP.Client.Conduit               (responseBody)
+import           Network.HTTP.Simple                       (httpJSON)
+import           Servant.Auth.Server.Internal.AddSetCookie (AddSetCookieApi,
+                                                            AddSetCookieApiVerb)
+import           Types                                     (Email (Email))
 
-import Crypto.JOSE.JWK ( JWK )
-import Debug.Trace (trace)
-import Crypto.JOSE (JWKSet)
-import Network.HTTP.Simple (httpJSON, Response)
-import Network.HTTP.Client.Conduit (responseBody)
 
-type Protected = PartiesAPI
+type instance AddSetCookieApi (NoContentVerb 'DELETE) = Verb 'DELETE 204 '[JSON] (AddSetCookieApiVerb NoContent)
+type instance AddSetCookieApi (NoContentVerb 'PUT) = Verb 'PUT 204 '[JSON] (AddSetCookieApiVerb NoContent)
+
+type Protected = "events" :> EventsAPI
 
 protected :: Servant.Auth.Server.AuthResult JWTClaim -> ServerT Protected (AppT IO)
-protected (Servant.Auth.Server.Authenticated claim) = eventsHandler (claimEmail claim)
-protected x = trace ("here:" <> show x) throwAll err401
+protected (Servant.Auth.Server.Authenticated claim) = eventsHandler (Email $ claimEmail claim)
+protected _ = throwAll err401
 
 type Unprotected = Raw
 
 
 unprotected :: CookieSettings -> JWTSettings -> ServerT Unprotected (AppT IO)
-unprotected cs jwts = serveDirectoryFileServer "frontend"
+unprotected _ _ = serveDirectoryFileServer "frontend"
 
 type API = (Auth '[JWT] JWTClaim :> Protected) :<|> Unprotected
 
@@ -71,7 +62,7 @@ server :: CookieSettings -> JWTSettings -> ServerT API (AppT IO)
 server cs jwts = protected :<|> unprotected cs jwts
 
 convertApp :: Config -> AppT IO a -> Handler a
-convertApp cfg app = Handler $ runReaderT (runApp app) cfg
+convertApp cfg application = Handler $ runReaderT (runApp application) cfg
 
 
 api' :: Proxy API
@@ -97,7 +88,10 @@ app cfg key jwkSet =
   in corsPolicy $ serveWithContext api' cfg' (appToServer cfg cookieSettings jwtCfg)
 
 debug :: Middleware
-debug app req resp = do { putStrLn "Request headers:" ; print (requestHeaders req) ; app req resp }
+debug application req resp = do
+  putStrLn "Request headers:"
+  print (requestHeaders req)
+  application req resp
 
 makePool :: BS.ByteString -> IO ConnectionPool
 makePool dbString = runStdoutLoggingT (createPostgresqlPool dbString 1)
@@ -124,6 +118,6 @@ startApp = do
     defaultConnectionString = "host=localhost port=5432 user=user password=password dbname=parties"
 
 lookupSetting :: Read a => String -> a -> IO a
-lookupSetting env def = do
+lookupSetting env default' = do
   p <- lookupEnv env
-  return $ maybe def read p
+  return $ maybe default' read p

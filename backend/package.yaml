@@ -43,6 +43,8 @@ dependencies:
 - http-conduit
 - lens
 - unordered-containers
+- aeson-typescript
+- time
 
 
 
@@ -57,6 +59,16 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - base
+    - parties-backend
+    when:
+    - condition: false
+      other-modules: Paths_parties_backend
+  ts-def:
+    main: Main.hs
+    source-dirs: tsdef
     dependencies:
     - base
     - parties-backend
