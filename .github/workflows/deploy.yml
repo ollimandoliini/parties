@@ -32,6 +32,7 @@ jobs:
           ollimandoliini/parties:latest
           ${{ env.SERVICE_NAME }}:${{ github.sha }}
           eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     - name: Build
