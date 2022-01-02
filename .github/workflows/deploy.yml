@@ -19,6 +19,7 @@ jobs:
       uses: 'google-github-actions/setup-gcloud@v0'
     - run: |
         gcloud auth configure-docker -q
+    - run: ls
     - name: Image
       run: |-
         docker build -t eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA .
