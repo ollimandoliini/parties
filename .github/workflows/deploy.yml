@@ -19,6 +19,7 @@ jobs:
       uses: 'google-github-actions/setup-gcloud@v0'
     - run: |
         gcloud auth configure-docker -q
+    - run: ls .
     - run: ls ..
     - run: ls ../..
     - name: Image
