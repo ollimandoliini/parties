@@ -3,7 +3,14 @@ steps:
   entrypoint: 'bash'
   args: ['-c', 'docker pull gcr.io/$PROJECT_ID/event-app:latest || exit 0']
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'event-app:latest', '-t', 'event-app:$COMMIT_SHA', '.' ]
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      docker build \
+      -t event-app:latest \
+      -t event-app:$COMMIT_SHA \
+      .
 images:
 - 'event-app'
-timeout: 3600s
+timeout: 7200s
