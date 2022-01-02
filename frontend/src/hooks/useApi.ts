@@ -3,7 +3,7 @@ import axios from "axios";
 
 import { useAuth0 } from "@auth0/auth0-react";
 
-const baseUrl = "http://localhost:8080/";
+const baseUrl = "/api/admin/";
 
 const useApi = () => {
   const { getAccessTokenSilently, loginWithRedirect } = useAuth0();

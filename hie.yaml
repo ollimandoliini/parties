@@ -1,0 +1,15 @@
+cradle:
+  stack:
+    stackYaml: "./backend/stack.yaml"
+    components:
+    - path: "./backend/src"
+      component: "parties-backend:lib"
+
+    - path: "./backend/app/Main.hs"
+      component: "parties-backend:exe:parties-backend-exe"
+
+    - path: "./backend/tsdef/Main.hs"
+      component: "parties-backend:exe:ts-def"
+
+    - path: "./backend/test"
+      component: "parties-backend:test:parties-backend-test"

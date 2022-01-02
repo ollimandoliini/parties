@@ -4,10 +4,12 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Types where
 
-import Data.Aeson (FromJSON (parseJSON), ToJSON(..), object, (.=), genericParseJSON, genericToJSON)
+import Data.Aeson (FromJSON (..), ToJSON(..), object, (.=), Value (Object, Null))
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Data.Aeson.TypeScript.TH (HasJSONOptions (getJSONOptions))
@@ -16,12 +18,19 @@ import Data.Time (UTCTime)
 import Database.Persist.TH (derivePersistField)
 import Servant (FromHttpApiData)
 import Data.Int (Int64)
+import Data.HashMap.Strict (insert)
 
 data WithId a = WithId Int64 a
   deriving (Show, Eq)
 
 instance ToJSON a => ToJSON (WithId a) where
-  toJSON (WithId id' a) = object ["id" .= id', "data" .= toJSON a]
+  toJSON (WithId id' a) = case toJSON a of
+    Object hm -> Object (insert "id" (toJSON id') hm)
+    Null -> Null
+    other -> object [
+      "id" .= id'
+      , "data" .= toJSON other
+      ]
 
 data Event = Event
   { name :: Text
@@ -29,49 +38,49 @@ data Event = Event
     , startTime :: UTCTime
     , location :: Text
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
-
-instance FromJSON Event
-instance ToJSON Event
 
 instance HasJSONOptions Event where
     getJSONOptions _ = defaultOptions
 
 newtype Email = Email Text
 
-newtype EventId = EventId
-  { id :: Int64}
-  deriving (Generic, FromHttpApiData)
+newtype InviteCode = InviteCode Text
+  deriving newtype FromHttpApiData
 
-instance FromJSON EventId
-instance ToJSON EventId
+newtype EventId = EventId
+  { id :: Int64 }
+  deriving stock Generic
+  deriving newtype FromHttpApiData
+  deriving anyclass (FromJSON, ToJSON)
+
 
 data Invite = Invite {
   code :: Text
   , invitees :: [Invitee]
 } deriving (Show, Eq, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
-newtype InviteId = InviteId {
-  id :: Int64
-  } deriving (Generic, FromHttpApiData)
+newtype InviteId = InviteId
+  { id :: Int64 }
+  deriving stock Generic
+  deriving newtype FromHttpApiData
+  deriving anyclass (FromJSON, ToJSON)
 
-instance FromJSON InviteId
-instance ToJSON InviteId
 
 data Invitee = Invitee {
   name :: Text
   , status :: Status
 } deriving (Show, Eq, Generic)
+  deriving anyclass (FromJSON, ToJSON)
 
 newtype InviteeId = InviteeId {
    id :: Int64
-  } deriving (Generic, FromHttpApiData)
-
-instance FromJSON InviteeId
-instance ToJSON InviteeId
-
-
+  } deriving stock Generic
+    deriving newtype FromHttpApiData
+    deriving anyclass (FromJSON, ToJSON)
 
 
 data Status
@@ -79,23 +88,30 @@ data Status
   | Tentative
   | Declined
   | Unknown
-  deriving (Show, Eq, Read, Generic)
+  deriving stock (Show, Eq, Read, Generic)
+  deriving anyclass (ToJSON, FromJSON)
 
 derivePersistField "Status"
 
-instance ToJSON Status where
-  toJSON = genericToJSON defaultOptions 
-
-instance FromJSON Status where
-  parseJSON = genericParseJSON defaultOptions 
-
-
-
-instance FromJSON Invitee
-instance ToJSON Invitee
-
-
-instance ToJSON Invite
-
 instance HasJSONOptions Invite where
     getJSONOptions _ = defaultOptions
+
+instance HasJSONOptions Invitee where
+    getJSONOptions _ = defaultOptions
+
+instance HasJSONOptions Status where
+    getJSONOptions _ = defaultOptions
+
+
+-- PUBLIC
+
+data EventInvite = EventInvite {
+    eventInfo :: Event
+    , invitees :: [WithId Invitee]
+} deriving stock Generic
+  deriving anyclass (ToJSON)
+
+newtype StatusPayload = StatusPayload {
+    status :: Status
+} deriving stock Generic
+  deriving anyclass (FromJSON, ToJSON)

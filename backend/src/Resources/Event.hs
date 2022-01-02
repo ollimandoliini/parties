@@ -20,35 +20,36 @@ import Utils (checkEventOrganizer, or404)
 
 -- EVENTS
 
-type PostEvent = ReqBody '[JSON] Event :> Post '[JSON] EventId
-type GetEvents = Get '[JSON] [WithId Event]
 type GetEvent = Capture "eventId" EventId :> Get '[JSON] Event
+type GetEvents = Get '[JSON] [WithId Event]
+type PostEvent = ReqBody '[JSON] Event :> Post '[JSON] EventId
+type PutEvent = Capture "eventId" EventId :> ReqBody '[JSON] Event :> PutNoContent
 type DeleteEvent = Capture "eventId" EventId :> Delete '[JSON] NoContent
 type Invites = Capture "eventId" EventId :> "invites" :> InvitesAPI
-
 
 type EventsAPI
   = GetEvent
   :<|> GetEvents
   :<|> PostEvent
+  :<|> PutEvent
   :<|> DeleteEvent
   :<|> Invites
-
 
 eventsHandler :: Email -> ServerT EventsAPI (AppT IO)
 eventsHandler email
   = getEvent email
-  :<|> getUserEvents email
+  :<|> getEvents email
   :<|> postEvent email
-  :<|> deleteEventHandler email
+  :<|> putEvent email
+  :<|> deleteEvent email
   :<|> invitesHandler email
 
 
 getEvent :: Email -> EventId -> AppT IO Event
-getEvent email (EventId eventId) = do
-  checkEventOrganizer email (EventId eventId)
+getEvent email eventId@(EventId eventId') = do
+  checkEventOrganizer email eventId
   pool <- asks dbPool
-  event <- or404 . liftIO $ runSqlPool (get $ toSqlKey eventId) pool
+  event <- or404 . liftIO $ runSqlPool (get $ toSqlKey eventId') pool
   return Event {
     name = DB.eventName event
     , description = DB.eventDescription event
@@ -56,8 +57,8 @@ getEvent email (EventId eventId) = do
     , location = DB.eventLocation event
     }
 
-getUserEvents :: Email -> AppT IO [WithId Event]
-getUserEvents (Email email) = do
+getEvents :: Email -> AppT IO [WithId Event]
+getEvents (Email email) = do
   pool <- asks dbPool
   let query = select $ do
         event <-
@@ -68,6 +69,27 @@ getUserEvents (Email email) = do
   result <- liftIO $ runSqlPool query pool
   return $ dbEventToApiEvent <$> result
 
+postEvent :: Email -> Event -> AppT IO EventId
+postEvent email event = do
+  pool <- asks dbPool
+  eventId <- liftIO $ runSqlPool (insert $ apiEventToDbEvent event email) pool
+  return $ EventId $ fromSqlKey eventId
+
+putEvent :: Email -> EventId -> Event -> AppT IO NoContent
+putEvent email (EventId eventId) event = do
+  checkEventOrganizer email (EventId eventId)
+  pool <- asks dbPool
+  let query = replace (toSqlKey eventId) (apiEventToDbEvent event email)
+  liftIO $ runSqlPool query pool
+  return NoContent
+
+deleteEvent :: Email -> EventId -> AppT IO NoContent
+deleteEvent email (EventId eventId) = do
+  checkEventOrganizer email (EventId eventId)
+  pool <- asks dbPool
+  liftIO $ runSqlPool (P.delete (toSqlKey @DB.Event eventId)) pool
+  return NoContent
+  
 dbEventToApiEvent :: Entity DB.Event -> WithId Event
 dbEventToApiEvent (Entity id' event) =
   let event' = Event {
@@ -79,28 +101,10 @@ dbEventToApiEvent (Entity id' event) =
   in WithId (fromSqlKey id') event'
 
 apiEventToDbEvent :: Event -> Email -> DB.Event
-apiEventToDbEvent Event{..} (Email email) = DB.Event {
+apiEventToDbEvent Event{..} (Email email)= DB.Event {
   eventName = name
   , eventDescription = description
   , eventOrganizer = email
   , eventStartTime = startTime
   , eventLocation = location
-}
-
-
-postEvent :: Email -> Event -> AppT IO EventId
-postEvent email event = do
-  pool <- asks dbPool
-  eventId <- liftIO $ runSqlPool (insert $ apiEventToDbEvent event email) pool
-  return $ EventId $ fromSqlKey eventId
-
-deleteEventHandler :: Email -> EventId -> AppT IO NoContent
-deleteEventHandler email (EventId eventId) = do
-  checkEventOrganizer email (EventId eventId)
-  pool <- asks dbPool
-  liftIO $ runSqlPool (P.delete eventIdKey) pool
-  return NoContent
-  where
-    eventIdKey :: Key DB.Event
-    eventIdKey = toSqlKey eventId
-
+  }

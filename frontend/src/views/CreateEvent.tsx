@@ -12,6 +12,8 @@ import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../react-datepicker.css";
 import gb from "date-fns/locale/en-GB";
+import { useNavigate } from "react-router";
+import { AxiosResponse } from "axios";
 
 registerLocale("gb", gb);
 
@@ -22,6 +24,10 @@ interface NewEvent {
   startTime: Date;
 }
 
+interface Id {
+  id: number
+}
+
 const CreteEvent = () => {
   const {
     handleSubmit,
@@ -30,14 +36,15 @@ const CreteEvent = () => {
     formState: { errors, isSubmitting },
   } = useForm();
   const api = useApi();
+  const navigate = useNavigate();
 
   const onSubmit = async (newEvent: NewEvent) => {
     try {
-      const result = await api.post("events", {
+      const result: AxiosResponse<Id> = await api.post("events", {
         ...newEvent,
         startTime: newEvent.startTime.toISOString(),
       });
-      console.log(result);
+      navigate(`/my-events/${result.data.id}`)
     } catch (e) {
       console.log(e);
     }

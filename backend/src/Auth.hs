@@ -5,20 +5,12 @@
 module Auth where
 
 import Control.Lens ( (^.) )
-import Control.Monad.Reader (asks)
-import Control.Monad.Trans (liftIO)
 import qualified Crypto.JWT as Jose
-import Data.Aeson ( fromJSON, Result(Success, Error), ToJSON )
-import Data.ByteString.Lazy (toStrict)
 import qualified Data.HashMap.Strict as KM
 import Data.Text ( Text, pack )
-import qualified Database as DB
-import Database.Persist.Postgresql (runSqlPool)
-import Debug.Trace (trace)
 import GHC.Generics ( Generic )
-import Servant( Header, NoContent (NoContent), err401, throwError)
-import Servant.API (Headers)
 import Servant.Auth.Server ( FromJWT(..), ToJWT )
+import Data.Aeson (Result(Success, Error), ToJSON, fromJSON)
 
 newtype JWTClaim = JWTClaim {
     claimEmail :: Text

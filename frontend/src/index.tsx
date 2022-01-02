@@ -6,7 +6,7 @@ import EventCodePrompt from "./views/EventCodePrompt";
 import Event from "./views/Event";
 import CreateEvent from "./views/CreateEvent";
 import { Route, Routes, BrowserRouter } from "react-router-dom";
-import Me from "./views/Me";
+import MyEvents from "./views/MyAccount";
 import { Auth0Provider } from "@auth0/auth0-react";
 import { ChakraProvider } from "@chakra-ui/react";
 import EventAdmin from "./views/EventAdmin";
@@ -27,8 +27,8 @@ ReactDOM.render(
             <Route path="e/:eventid" element={<EventCodePrompt />} />
             <Route path="e/:eventId/:inviteCode" element={<Event />} />
             <Route path="create-event" element={<CreateEvent />} />
-            <Route path="me/my-events/:eventId" element={<EventAdmin />} />
-            <Route path="me" element={<Me />} />
+            <Route path="my-events/:eventId" element={<EventAdmin />} />
+            <Route path="my-events" element={<MyEvents />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

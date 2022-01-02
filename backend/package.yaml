@@ -35,7 +35,6 @@ dependencies:
 - servant-auth
 - servant-auth-server
 - password
-- wai-cors
 - esqueleto
 - jose
 - containers
@@ -45,6 +44,8 @@ dependencies:
 - unordered-containers
 - aeson-typescript
 - time
+- directory
+- wai-app-static
 
 
 

@@ -2,6 +2,7 @@
   "name": "react-frontend",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:8080",
   "dependencies": {
     "@auth0/auth0-react": "^1.8.0",
     "@chakra-ui/react": "^1.7.3",

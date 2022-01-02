@@ -12,7 +12,7 @@ const App = () => {
         {!isAuthenticated ? (
           <Button
             onClick={() =>
-              loginWithRedirect({ redirectUri: "http://localhost:3000/me" })
+              loginWithRedirect({ redirectUri: "http://localhost:8080/my-events" })
             }
           >
             Login

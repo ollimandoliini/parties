@@ -2,6 +2,7 @@
 {-# LANGUAGE RecordWildCards  #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators    #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Resources.Event.Invite.Invitee where
 import           App                             (AppT, Config (dbPool))
 import           Control.Monad.Reader            (asks)
@@ -17,6 +18,8 @@ import           Types                           (Email, EventId,
                                                   InviteeId (InviteeId),
                                                   Status (..))
 import           Utils                           (checkEventOrganizer, or404)
+import GHC.Generics (Generic)
+import Data.Aeson (FromJSON)
 
 
 type InviteesAPI
@@ -28,9 +31,15 @@ type InviteesAPI
 
 type GetInvitee = Capture "inviteeId" InviteeId :> Get '[JSON] Invitee
 type GetInvitees = Get '[JSON] [Invitee]
-type PostInvitee = ReqBody '[JSON] Text :> Post '[JSON] InviteeId
+type PostInvitee = ReqBody '[JSON] NewInvitee :> Post '[JSON] InviteeId
 type PutInvitee = Capture "inviteeId" InviteeId :> ReqBody '[JSON] Invitee :> PutNoContent
 type DeleteInvitee = Capture "inviteeId" InviteeId :> DeleteNoContent
+
+newtype NewInvitee = NewInvitee {
+  name :: Text
+} deriving Generic
+
+instance FromJSON NewInvitee
 
 inviteesHandler :: Email -> EventId -> InviteId -> ServerT InviteesAPI (AppT IO)
 inviteesHandler email eventId inviteId
@@ -55,9 +64,9 @@ getInvitees email eventId (InviteId inviteId)  = do
   checkEventOrganizer email eventId
   pool <- asks dbPool
   let query = select $ do
-      event <- from $ table @DB.Invitee
-      where_ $ event ^. DB.InviteeInvite  ==. val (toSqlKey @DB.Invite inviteId)
-      return event
+        event <- from $ table @DB.Invitee
+        where_ $ event ^. DB.InviteeInvite  ==. val (toSqlKey @DB.Invite inviteId)
+        return event
   liftIO $ (fmap . fmap) dbInviteeToApiInvitee (runSqlPool query pool)
 
 dbInviteeToApiInvitee :: Entity DB.Invitee -> Invitee
@@ -67,8 +76,8 @@ dbInviteeToApiInvitee (Entity _ DB.Invitee{..}) =
     , status = inviteeStatus
   }
 
-postInvitee :: Email -> EventId -> InviteId -> Text -> AppT IO InviteeId
-postInvitee email eventId (InviteId inviteId) inviteeName = do
+postInvitee :: Email -> EventId -> InviteId -> NewInvitee -> AppT IO InviteeId
+postInvitee email eventId (InviteId inviteId) (NewInvitee inviteeName) = do
   checkEventOrganizer email eventId
   pool <- asks dbPool
   let newInvitee = DB.Invitee {

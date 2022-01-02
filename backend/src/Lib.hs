@@ -22,9 +22,6 @@ import           Database.Persist.Sql                      (runSqlPool)
 import           Network.Wai                               (Middleware,
                                                             Request (requestHeaders))
 import           Network.Wai.Handler.Warp                  (run)
-import           Network.Wai.Middleware.Cors               (CorsResourcePolicy (corsMethods, corsRequestHeaders),
-                                                            cors,
-                                                            simpleCorsResourcePolicy)
 import           Resources.Event
 import           Servant
 import           System.Environment                        (lookupEnv)
@@ -39,53 +36,71 @@ import           Network.HTTP.Simple                       (httpJSON)
 import           Servant.Auth.Server.Internal.AddSetCookie (AddSetCookieApi,
                                                             AddSetCookieApiVerb)
 import           Types                                     (Email (Email))
-
+import Resources.Public
+import System.IO (hSetBuffering)
+import GHC.IO.Handle (BufferMode(LineBuffering))
+import GHC.IO.Handle.FD (stdout)
+import System.Directory
+import WaiAppStatic.Types (LookupResult(..), unsafeToPiece)
+import Network.Wai.Application.Static
 
 type instance AddSetCookieApi (NoContentVerb 'DELETE) = Verb 'DELETE 204 '[JSON] (AddSetCookieApiVerb NoContent)
 type instance AddSetCookieApi (NoContentVerb 'PUT) = Verb 'PUT 204 '[JSON] (AddSetCookieApiVerb NoContent)
 
-type Protected = "events" :> EventsAPI
 
-protected :: Servant.Auth.Server.AuthResult JWTClaim -> ServerT Protected (AppT IO)
-protected (Servant.Auth.Server.Authenticated claim) = eventsHandler (Email $ claimEmail claim)
+type Admin = "api" :> "admin" :> "events" :> EventsAPI
+type Public = "api" :> "public" :> PublicAPI
+
+type API
+  = Public
+  :<|> (Auth '[JWT] JWTClaim :> Admin)
+
+type APIAndFrontend = API :<|> Raw
+
+protected :: AuthResult JWTClaim -> ServerT Admin (AppT IO)
+protected (Authenticated claim) = eventsHandler (Email $ claimEmail claim)
 protected _ = throwAll err401
 
-type Unprotected = Raw
+unprotected :: ServerT Public (AppT IO)
+unprotected
+  = publicApiHandler
 
+server :: ServerT APIAndFrontend (AppT IO)
+server
+  = (unprotected :<|> protected) :<|> serveFrontEnd "frontend"
 
-unprotected :: CookieSettings -> JWTSettings -> ServerT Unprotected (AppT IO)
-unprotected _ _ = serveDirectoryFileServer "frontend"
+serveFrontEnd :: String -> ServerT Raw (AppT IO)
+serveFrontEnd rootDirectory =
+  serveDirectoryWith settingsWithFallback
+  where
+    settingsWithFallback = (defaultWebAppSettings rootDirectory) { ssLookupFile = lookup' }
+    lookup' p = do
+      f <- ssLookupFile (defaultWebAppSettings rootDirectory) p
+      case f of
+        LRFile   f' -> return $ LRFile f'
+        LRFolder f' -> return $ LRFolder f'
+        LRNotFound -> ssLookupFile (defaultWebAppSettings rootDirectory) [unsafeToPiece "index.html"]
 
-type API = (Auth '[JWT] JWTClaim :> Protected) :<|> Unprotected
-
-server :: CookieSettings -> JWTSettings -> ServerT API (AppT IO)
-server cs jwts = protected :<|> unprotected cs jwts
 
 convertApp :: Config -> AppT IO a -> Handler a
 convertApp cfg application = Handler $ runReaderT (runApp application) cfg
 
-
-api' :: Proxy API
+api' :: Proxy APIAndFrontend
 api' = Proxy
 
-appToServer :: Config -> CookieSettings -> JWTSettings -> Server API
-appToServer appCfg cookieSettings jwtSettings =
-  hoistServerWithContext api' (Proxy :: Proxy '[CookieSettings, JWTSettings]) (convertApp appCfg) (server cookieSettings jwtSettings)
+context :: Proxy '[CookieSettings, JWTSettings]
+context = Proxy
 
+appToServer :: Config -> Server APIAndFrontend
+appToServer appCfg =
+  hoistServerWithContext api' context (convertApp appCfg) server
 
-corsPolicy :: Middleware
-corsPolicy = cors (const $ Just policy)
-    where
-      policy = simpleCorsResourcePolicy
-        { corsRequestHeaders = ["Authorization", "Content-Type"]
-        , corsMethods = ["OPTIONS", "GET", "PUT", "POST", "PATCH", "DELETE"] }
 
 app :: Config -> JWK -> JWKSet -> Application
 app cfg key jwkSet =
   let jwtCfg = (defaultJWTSettings key) {validationKeys = jwkSet}
-      cookieSettings = defaultCookieSettings {cookieIsSecure = NotSecure, cookieXsrfSetting = Nothing}
-      cfg' = cookieSettings :. jwtCfg :. EmptyContext
-  in corsPolicy $ serveWithContext api' cfg' (appToServer cfg cookieSettings jwtCfg)
+      cfg' = defaultCookieSettings :. jwtCfg :. EmptyContext
+  in serveWithContext api' cfg' (appToServer cfg)
 
 debug :: Middleware
 debug application req resp = do
@@ -96,15 +111,15 @@ debug application req resp = do
 makePool :: BS.ByteString -> IO ConnectionPool
 makePool dbString = runStdoutLoggingT (createPostgresqlPool dbString 1)
 
-
 getJwk :: IO JWKSet
 getJwk = responseBody <$> httpJSON jwkUrl
   where
     jwkUrl = "https://dev-7xdjfw10.eu.auth0.com/.well-known/jwks.json"
 
-
 startApp :: IO ()
 startApp = do
+  hSetBuffering stdout LineBuffering
+  lookupEnv "DB_CONNECTION_STRING" >>= print
   !dbString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString
   !key <- generateKey
   !jwkSet <- getJwk
@@ -115,7 +130,7 @@ startApp = do
   putStrLn $ "App running in port: " ++ show port
   run port (debug $ app cfg key jwkSet)
   where
-    defaultConnectionString = "host=localhost port=5432 user=user password=password dbname=parties"
+    defaultConnectionString = "host=host.docker.internal port=5432 user=user password=password dbname=parties"
 
 lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env default' = do
