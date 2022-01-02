@@ -6,4 +6,4 @@ steps:
   args: [ 'build', '-t', 'event-app:latest', '-t', 'event-app:$COMMIT_SHA', '.' ]
 images:
 - 'event-app'
-timeout: 1800s
+timeout: 3600s
