@@ -30,8 +30,8 @@ jobs:
         push: false
         tags: |
           ollimandoliini/parties:latest
-          $SERVICE_NAME:$GITHUB_SHA
-          eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
+          ${{ env.SERVICE_NAME }}:${{ env.GITHUB_SHA }}
+          eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ env.GITHUB_SHA }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
     - name: Build
