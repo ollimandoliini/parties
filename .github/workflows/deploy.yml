@@ -1,15 +1,27 @@
 name: learn-github-actions
 on: [push]
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
+    env:
+      SERVICE_NAME: event-app
+      PROJECT_ID: eventti
     permissions:
       contents: 'read'
       id-token: 'write'
     steps:
-    - id: 'auth'
-      name: 'Authenticate to Google Cloud'
+    - name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v0'
       with:
         workload_identity_provider: 'projects/374308934121/locations/global/workloadIdentityPools/gh-pool/providers/my-provider'
-        service_account: 'github-actions@eventti.iam.gserviceaccount.com '
+        service_account: 'github-actions@eventti.iam.gserviceaccount.com'
+    - name: 'Set up Cloud SDK'
+      uses: 'google-github-actions/setup-gcloud@v0'
+    - run: |
+        gcloud auth configure-docker -q
+    - name: Image
+      run: |-
+        docker build -t eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA .
+    - name: Build
+      run: |-
+        docker push eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
