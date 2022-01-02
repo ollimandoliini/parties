@@ -17,6 +17,8 @@ jobs:
         service_account: 'github-actions@eventti.iam.gserviceaccount.com'
     - name: 'Set up Cloud SDK'
       uses: 'google-github-actions/setup-gcloud@v0'
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
     - run: |
         gcloud auth configure-docker -q
     - uses: actions/checkout@v2
