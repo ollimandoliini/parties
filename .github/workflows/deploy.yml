@@ -20,9 +20,14 @@ jobs:
     - run: |
         gcloud auth configure-docker -q
     - uses: actions/checkout@v2
-    - name: Image
-      run: |-
-        docker build -t eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA .
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ollimandoliini/parties:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
     - name: Build
       run: |-
         docker push eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA
