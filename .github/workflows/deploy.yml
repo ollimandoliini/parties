@@ -35,6 +35,7 @@ jobs:
           eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+    - run: docker image ls
     - name: Build
       run: |-
         docker push eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
