@@ -30,9 +30,8 @@ jobs:
         push: false
         tags: |
           ollimandoliini/parties:latest
-          ${{ env.SERVICE_NAME }}:${{ github.sha }}
           eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          eu.gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}
+        load: true
         cache-from: type=gha
         cache-to: type=gha,mode=max
     - run: docker image ls
