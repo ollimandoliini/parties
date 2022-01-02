@@ -3,9 +3,6 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./
     env:
       SERVICE_NAME: event-app
       PROJECT_ID: eventti
@@ -23,6 +20,7 @@ jobs:
     - run: |
         gcloud auth configure-docker -q
     - run: ls ..
+    - run: ls ../..
     - name: Image
       run: |-
         docker build -t eu.gcr.io/$PROJECT_ID/$SERVICE_NAME:$GITHUB_SHA .
