@@ -27,7 +27,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        push: true
+        push: false
         tags: ollimandoliini/parties:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
