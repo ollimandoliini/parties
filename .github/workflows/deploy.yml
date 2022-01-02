@@ -1,0 +1,15 @@
+name: learn-github-actions
+on: [push]
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    steps:
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        workload_identity_provider: 'projects/374308934121/locations/global/workloadIdentityPools/gh-pool/providers/my-provider'
+        service_account: 'github-actions@eventti.iam.gserviceaccount.com '
