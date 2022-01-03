@@ -6,7 +6,7 @@ resource "google_cloud_run_service" "event_app" {
   template {
     spec {
       containers {
-        image = "gcr.io/${var.project}/event-app:${var.image_tag}"
+        image = "eu.gcr.io/${var.project}/event-app:${var.image_tag}"
         env {
           name = "DB_CONNECTION_STRING"
           value = "postgres://${google_sql_user.db_user.name}:${google_sql_user.db_user.password}@/${google_sql_database.database.name}?host=/cloudsql/${google_sql_database_instance.instance.connection_name}"
