@@ -119,6 +119,7 @@ getJwk = responseBody <$> httpJSON jwkUrl
 startApp :: IO ()
 startApp = do
   hSetBuffering stdout LineBuffering
+  listDirectory "/" >>= print
   !dbConnectionString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString  
   !key <- generateKey
   !jwkSet <- getJwk
