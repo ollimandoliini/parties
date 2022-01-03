@@ -1,10 +1,22 @@
 
 
+resource "google_service_account" "app" {
+  account_id   = "event-app"
+  display_name = "Event App Service Account"
+}
+
+resource "google_project_iam_member" "cloudsql_client_binding" {
+  project =  var.project
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.app.email}"
+}
+
 resource "google_cloud_run_service" "event_app" {
   name     = "event-app"
   location = "europe-north1"
   template {
     spec {
+      service_account_name = google_service_account.app.email
       containers {
         image = "eu.gcr.io/${var.project}/event-app:${var.image_tag}"
         env {
