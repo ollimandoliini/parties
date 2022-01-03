@@ -42,6 +42,7 @@ jobs:
       uses: hashicorp/setup-terraform@v1
     - name: Apply Infrastructure
       run: |-
+        ls .
         cd infra/environments/dev
         terraform init
         terraform plan -var 'image_tag=${{ github.sha }}'
