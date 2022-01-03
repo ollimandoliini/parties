@@ -119,18 +119,17 @@ getJwk = responseBody <$> httpJSON jwkUrl
 startApp :: IO ()
 startApp = do
   hSetBuffering stdout LineBuffering
-  lookupEnv "DB_CONNECTION_STRING" >>= print
-  !dbString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString
+  !dbConnectionString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString  
   !key <- generateKey
   !jwkSet <- getJwk
-  pool <- makePool dbString
+  pool <- makePool dbConnectionString
   let cfg = Config pool
       port = 8080
   runSqlPool doMigrations pool
   putStrLn $ "App running in port: " ++ show port
   run port (debug $ app cfg key jwkSet)
   where
-    defaultConnectionString = "host=host.docker.internal port=5432 user=user password=password dbname=parties"
+    defaultConnectionString = "host=localhost port=5432 user=user password=password dbname=parties"
 
 lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env default' = do
