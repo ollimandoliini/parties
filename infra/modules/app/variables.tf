@@ -1,6 +1,10 @@
 variable "project" {
-  type        = string
+  type = string
 }
 variable "image_tag" {
-  type        = string
+  type = string
+}
+
+variable "region" {
+  type = string
 }

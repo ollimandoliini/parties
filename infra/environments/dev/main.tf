@@ -8,7 +8,8 @@ provider "google" {
 }
 
 module "app" {
-  source = "../../modules/app"
-  project = "eventti"
+  source    = "../../modules/app"
+  project   = "eventti"
+  region    = "europe-north1"
   image_tag = var.image_tag
 }
