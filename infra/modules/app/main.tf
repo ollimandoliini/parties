@@ -8,8 +8,8 @@ resource "google_cloud_run_service" "event_app" {
       containers {
         image = "gcr.io/${var.project}/event-app:${var.image_tag}"
         env {
-          # postgres://<pg_user>:<pg_pass>@/<db_name>?host=/cloudsql/<cloud_sql_instance_connection_name>
-          DB_CONNECTION_STRING = "postgres://${google_sql_user.db_user.name}:${google_sql_user.db_user.password}@/${google_sql_database.database.name}?host=/cloudsql/${google_sql_database_instance.instance.connection_name}"
+          name = "DB_CONNECTION_STRING"
+          value = "postgres://${google_sql_user.db_user.name}:${google_sql_user.db_user.password}@/${google_sql_database.database.name}?host=/cloudsql/${google_sql_database_instance.instance.connection_name}"
         }
       }
     }
