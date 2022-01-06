@@ -11,6 +11,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 import { ChakraProvider } from "@chakra-ui/react";
 import EventAdmin from "./views/EventAdmin";
 import NotFound from "./views/NotFound";
+import Home from "./views/Home";
 
 ReactDOM.render(
   <ChakraProvider>
@@ -24,6 +25,7 @@ ReactDOM.render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<App />}>
+            <Route path="/" element={<Home />} />
             <Route path="e/:eventid" element={<EventCodePrompt />} />
             <Route path="e/:eventId/:inviteCode" element={<Event />} />
             <Route path="create-event" element={<CreateEvent />} />

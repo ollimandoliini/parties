@@ -1,5 +1,4 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { Button } from "@chakra-ui/react";
 import React from "react";
 import { Outlet } from "react-router-dom";
 import "./App.css";
@@ -10,17 +9,17 @@ const App = () => {
     <div className="page-wrap">
       <div className="page-header">
         {!isAuthenticated ? (
-          <Button
+          <button
             onClick={() =>
               loginWithRedirect({ redirectUri:  `${window.location.origin}/my-events` })
             }
           >
             Login
-          </Button>
+          </button>
         ) : (
-          <Button onClick={() => logout({ returnTo: window.location.origin })}>
+          <button onClick={() => logout({ returnTo: window.location.origin })}>
             Logout
-          </Button>
+          </button>
         )}
       </div>
       <div className="page-main">
