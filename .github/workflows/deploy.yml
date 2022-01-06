@@ -52,13 +52,15 @@ jobs:
         terraform apply -auto-approve -var 'image_tag=${{ github.sha }}'
     - name: Send deployment completed notification
       if: ${{ success() }}
-      run: |
-        curl -X POST \
-        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-        -d "chat_id=${{ secrets.OLLI_CHAT_ID }}&text=Deployment completed! 🎉"
+      run: >
+        curl -X POST
+        -H "Content-Type: application/json"
+        -d '{"chat_id": ${{ secrets.OLLI_CHAT_ID }}, "text": "Deployment succesfully completed! 🎉", "disable_notification": true}'
+        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
     - name: Send deployment failed notification
       if: ${{ failure() }}
-      run: |
-        curl -X POST \
-        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-        -d "chat_id=${{ secrets.OLLI_CHAT_ID }}&text=Deployment failed... ☹️"
+      run: >
+        curl -X POST
+        -H "Content-Type: application/json"
+        -d '{"chat_id": ${{ secrets.OLLI_CHAT_ID }}, "text": "Deployment failed... ☹️", "disable_notification": true}'
+        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
