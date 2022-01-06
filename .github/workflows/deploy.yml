@@ -15,7 +15,7 @@ jobs:
       run: >
         curl -X POST
         -H "Content-Type: application/json"
-        -d '{"chat_id": ${{ secrets.OLLI_CHAT_ID }}, "text": "Deployment started\n⚙️ https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}", "disable_notification": true}'
+        -d '{"chat_id": ${{ secrets.OLLI_CHAT_ID }}, "text": "Deployment started ⚙️\nhttps://github.com/${{github.repository}}/actions/runs/${{github.run_id}}", "disable_notification": true}'
         "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v0'
