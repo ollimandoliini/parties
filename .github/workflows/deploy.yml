@@ -11,6 +11,11 @@ jobs:
       id-token: 'write'
     steps:
     - uses: actions/checkout@v2
+    - name: Send build start notification
+      run: |
+        curl -X POST \
+        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+        -d "chat_id=${{ secrets.OLLI_CHAT_ID }}&text=Deployment started ⚙️"
     - name: Authenticate to Google Cloud
       uses: 'google-github-actions/auth@v0'
       with:
@@ -44,3 +49,14 @@ jobs:
         cd infra/environments/dev
         terraform init
         terraform apply -auto-approve -var 'image_tag=${{ github.sha }}'
+    - name: Send build completed notification
+      run: |
+        curl -X POST \
+        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+        -d "chat_id=${{ secrets.OLLI_CHAT_ID }}&text=Deployment completed! 🎉"
+    - name: Send build completed notification
+      if: ${{ failure() }}
+      run: |
+        curl -X POST \
+        "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+        -d "chat_id=${{ secrets.OLLI_CHAT_ID }}&text=Deployment failed... ☹️"
