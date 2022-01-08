@@ -1,21 +1,12 @@
 import { Controller, useForm } from "react-hook-form";
-import {
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-} from "@chakra-ui/react";
 import React from "react";
 import useApi from "../hooks/useApi";
-import DatePicker, { registerLocale } from "react-datepicker";
+import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../react-datepicker.css";
-import gb from "date-fns/locale/en-GB";
 import { useNavigate } from "react-router";
 import { AxiosResponse } from "axios";
 
-registerLocale("gb", gb);
 
 interface NewEvent {
   name: string;
@@ -33,7 +24,7 @@ const CreteEvent = () => {
     handleSubmit,
     register,
     control,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm();
   const api = useApi();
   const navigate = useNavigate();
@@ -51,24 +42,20 @@ const CreteEvent = () => {
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
-      <FormControl isInvalid={errors.name}>
-        <FormLabel htmlFor="name">Name</FormLabel>
-        <Input
+        <label htmlFor="name">Name</label>
+        <input
           id="name"
           type="text"
-          label="Name"
           {...register("name", {
             required: "This is required",
             minLength: { value: 4, message: "Minimum length should be 4" },
           })}
         />
-        <FormErrorMessage>
+        <div>
           {errors.name && errors.name.message}
-        </FormErrorMessage>
-      </FormControl>
-      <FormControl isInvalid={errors.description}>
-        <FormLabel htmlFor="description">Description</FormLabel>
-        <Input
+        </div>
+        <label htmlFor="description">Description</label>
+        <input
           id="description"
           type="text"
           {...register("description", {
@@ -76,13 +63,11 @@ const CreteEvent = () => {
             minLength: { value: 4, message: "Minimum length should be 4" },
           })}
         />
-        <FormErrorMessage>
+        <div>
           {errors.description && errors.description.message}
-        </FormErrorMessage>
-      </FormControl>
-      <FormControl isInvalid={errors.location}>
-        <FormLabel htmlFor="location">Location</FormLabel>
-        <Input
+        </div>
+        <label htmlFor="location">Location</label>
+        <input
           id="location"
           type="text"
           {...register("location", {
@@ -90,13 +75,11 @@ const CreteEvent = () => {
             minLength: { value: 4, message: "Minimum length should be 4" },
           })}
         />
-        <FormErrorMessage>
+        <div>
           {errors.location && errors.location.message}
-        </FormErrorMessage>
-      </FormControl>
+        </div>
 
-      <FormControl isInvalid={errors.description}>
-        <FormLabel htmlFor="published-date">Start time</FormLabel>
+        <label htmlFor="published-date">Start time</label>
         <Controller
           name="startTime"
           control={control}
@@ -113,10 +96,9 @@ const CreteEvent = () => {
             />
           )}
         />
-      </FormControl>
-      <Button type="submit" isLoading={isSubmitting}>
+      <button type="submit">
         Submit
-      </Button>
+      </button>
     </form>
   );
 };

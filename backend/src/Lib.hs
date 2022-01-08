@@ -40,7 +40,6 @@ import Resources.Public
 import System.IO (hSetBuffering)
 import GHC.IO.Handle (BufferMode(LineBuffering))
 import GHC.IO.Handle.FD (stdout)
-import System.Directory
 import WaiAppStatic.Types (LookupResult(..), unsafeToPiece)
 import Network.Wai.Application.Static
 

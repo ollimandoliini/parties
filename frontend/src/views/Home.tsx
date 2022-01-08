@@ -5,7 +5,8 @@ const Home = () => {
   const { isAuthenticated } = useAuth0();
   return (
     <>
-      <h1>Invite.to</h1>
+      <p>Hi hello! With Invitee.io you can organize events and send out invitations for your invitees.</p>
+
       {isAuthenticated && <a href="/my-events">Take me to my events</a>}
     </>
   );

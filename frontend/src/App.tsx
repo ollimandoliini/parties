@@ -3,25 +3,43 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import "./App.css";
 
-const App = () => {
-  const { loginWithRedirect, logout, isAuthenticated } = useAuth0();
+const Header = () => {
+  const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
   return (
-    <div className="page-wrap">
-      <div className="page-header">
+    <div className="page-header">
+      <a href="/">
+        <h1>Invitee.to</h1>
+      </a>
+      <div className="login-button-container">
         {!isAuthenticated ? (
           <button
             onClick={() =>
-              loginWithRedirect({ redirectUri:  `${window.location.origin}/my-events` })
+              loginWithRedirect({
+                redirectUri: `${window.location.origin}/my-events`,
+              })
             }
           >
-            Login
+            Login / Signup
           </button>
         ) : (
-          <button onClick={() => logout({ returnTo: window.location.origin })}>
-            Logout
-          </button>
+          <>
+            <div>Logged in as: {user?.name}</div>
+            <button
+              onClick={() => logout({ returnTo: window.location.origin })}
+            >
+              Logout
+            </button>
+          </>
         )}
       </div>
+    </div>
+  );
+};
+
+const App = () => {
+  return (
+    <div className="page-wrap">
+      <Header />
       <div className="page-main">
         <Outlet />
       </div>

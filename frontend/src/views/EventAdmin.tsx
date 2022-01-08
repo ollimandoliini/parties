@@ -3,16 +3,6 @@ import React, { SyntheticEvent, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import useApi from "../hooks/useApi";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  Heading,
-  Input,
-  List,
-  ListItem,
-} from "@chakra-ui/react";
 
 
 interface InviteCardProps {
@@ -37,19 +27,19 @@ const InviteCard: React.FC<InviteCardProps> = ({
   };
 
   return (
-    <Box borderWidth="3px" borderRadius="lg">
+    <div>
       <code>{invite.code}</code>
-      <List>
+      <ol>
         {invite.invitees.map((invitee, index) => (
-          <ListItem key={index}>
+          <li key={index}>
             {invitee.name} {invitee.status}
-          </ListItem>
+          </li>
         ))}
-      </List>
+      </ol>
       <div>
         <sup onClick={onClickRemove}>x</sup>
       </div>
-    </Box>
+    </div>
   );
 };
 
@@ -94,28 +84,25 @@ const InviteForm: React.FC<InviteFormProps> = ({ eventId, invites, setInvites })
   };
 
   return (
-    <Box>
+    <div>
       <h2>New invite</h2>
       <form onSubmit={onSubmit} autoComplete="off">
-        <FormControl>
-          <FormLabel htmlFor="name">Name</FormLabel>
-          <Input
+          <label htmlFor="name">Name</label>
+          <input
             id="name"
             type="text"
-            label="Name"
             onChange={(e) => setNewInvitee(e.target.value)}
             value={newInvitee}
           />
-        </FormControl>
-        <Button type="submit">Add</Button>
+        <button type="submit">Add</button>
         {invitees.map((invitee, i) => (
           <div key={i}>
               {invitee} <sup onClick={onClickRemove(invitee)}>x</sup>
           </div>
         ))}
-        <Button onClick={onClickCreateInvite}>Create Invite</Button>
+        <button onClick={onClickCreateInvite}>Create Invite</button>
       </form>
-    </Box>
+    </div>
   );
 };
 
@@ -125,6 +112,13 @@ const EventAdmin: React.FC = () => {
   const [eventData, setEventData] = useState<IEvent | null>(null);
   const [invites, setInvites] = useState<WithId<IInvite>[]>([]);
   const navigate = useNavigate();
+
+  const onClickRemove = () => {
+    (async () => {
+      await api.delete(`/events/${eventId}`);
+      navigate('/my-events/')
+    })();
+  };
 
   useEffect(() => {
     (async () => {
@@ -151,8 +145,9 @@ const EventAdmin: React.FC = () => {
 
   return (
     <>
-      <Box>
-        <Heading as="h1">{eventData?.name}</Heading>
+      <div>
+        <h1>{eventData?.name}</h1>
+        <h2>Invites</h2>
         {invites.map((invite) => (
           <InviteCard
             key={invite.id}
@@ -162,12 +157,13 @@ const EventAdmin: React.FC = () => {
             setInvites={setInvites}
           />
         ))}
-      </Box>
       <InviteForm
         eventId={eventId}
         invites={invites}
         setInvites={setInvites}
-      />
+        />
+    <button onClick={onClickRemove}>Delete event</button>
+        </div>
     </>
   );
 };

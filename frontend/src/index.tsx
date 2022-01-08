@@ -8,13 +8,11 @@ import CreateEvent from "./views/CreateEvent";
 import { Route, Routes, BrowserRouter } from "react-router-dom";
 import MyEvents from "./views/MyAccount";
 import { Auth0Provider } from "@auth0/auth0-react";
-import { ChakraProvider } from "@chakra-ui/react";
 import EventAdmin from "./views/EventAdmin";
 import NotFound from "./views/NotFound";
 import Home from "./views/Home";
 
 ReactDOM.render(
-  <ChakraProvider>
     <Auth0Provider
       domain="dev-7xdjfw10.eu.auth0.com"
       clientId="Bv0t7ip01uXIfvfs3r0vP0KKJWdkZCnL"
@@ -35,7 +33,6 @@ ReactDOM.render(
           </Route>
         </Routes>
       </BrowserRouter>
-    </Auth0Provider>
-  </ChakraProvider>,
+    </Auth0Provider>,
   document.getElementById("root")
 );

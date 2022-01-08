@@ -1,10 +1,9 @@
-import { Box, Button } from "@chakra-ui/react";
 import { AxiosResponse } from "axios";
+import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import useApi from "../hooks/useApi";
-
-
+import "./MyAccount.scss";
 
 interface EventRowProps {
   event: WithId<IEvent>;
@@ -17,22 +16,15 @@ const EventRow: React.FC<EventRowProps> = ({
   myEvents,
   setMyEvents,
 }) => {
-  const api = useApi();
-  const onClickRemove = () => {
-    (async () => {
-      await api.delete(`/events/${event.id}`);
-      setMyEvents(myEvents.filter(event_ => event_.id !== event.id))
-    })();
-  };
 
   return (
-    <Box bg="tomato" w="100%" p={4} ctolor="white">
-      <Link to={`/my-events/${event.id}`}>
+    <div className="my-event-card">
+      <a href={`/my-events/${event.id}`}>
         <h3>{event.name}</h3>
+        <div>{format(new Date(event.startTime), "dd.MM.yyyy HH:mm")}</div>
         <p>{event.description}</p>
-      </Link>
-      <sup onClick={onClickRemove}>x</sup>
-    </Box>
+      </a>
+    </div>
   );
 };
 
@@ -50,7 +42,7 @@ const MyAccount: React.FC = () => {
   return (
     <>
       <h1>My events</h1>
-      <div>
+      <div className="my-event-cards-container">
         {myEvents.map((event: WithId<IEvent>) => (
           <EventRow
             key={event.id}
@@ -60,9 +52,7 @@ const MyAccount: React.FC = () => {
           />
         ))}
       </div>
-      <Button>
-        <Link to="/create-event">Create new event</Link>
-      </Button>
+      <Link to="/create-event">Create new event</Link>
     </>
   );
 };
