@@ -16,7 +16,6 @@ const EventRow: React.FC<EventRowProps> = ({
   myEvents,
   setMyEvents,
 }) => {
-
   return (
     <div className="my-event-card">
       <a href={`/my-events/${event.id}`}>
@@ -34,8 +33,12 @@ const MyAccount: React.FC = () => {
 
   useEffect(() => {
     (async () => {
-      const events: AxiosResponse<WithId<IEvent>[]> = await api.get("events");
-      setMyEvents(events.data);
+      try {
+        const events: AxiosResponse<WithId<IEvent>[]> = await api.get("events");
+        setMyEvents(events.data);
+      } catch (e) {
+        console.log(e);
+      }
     })();
   }, [api]);
 
