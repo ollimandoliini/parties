@@ -15,7 +15,7 @@ const Header = () => {
           <button
             onClick={() =>
               loginWithRedirect({
-                redirectUri: `${window.location.origin}/my-events`,
+                redirectUri: `${window.location.origin}/my-events/`,
               })
             }
           >

@@ -18,7 +18,7 @@ ReactDOM.render(
       clientId="Bv0t7ip01uXIfvfs3r0vP0KKJWdkZCnL"
       redirectUri={window.location.origin}
       audience="https://dev-7xdjfw10.eu.auth0.com/api/v2/"
-      scope="read:current_user update:current_user_metadata"
+      scope="read:current_user"
       useRefreshTokens={true}
       cacheLocation="localstorage"
     >
