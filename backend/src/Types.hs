@@ -115,3 +115,9 @@ newtype StatusPayload = StatusPayload {
     status :: Status
 } deriving stock Generic
   deriving anyclass (FromJSON, ToJSON)
+
+instance HasJSONOptions (WithId a) where
+    getJSONOptions _ = defaultOptions
+
+instance HasJSONOptions EventInvite where
+    getJSONOptions _ = defaultOptions

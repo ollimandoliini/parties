@@ -26,8 +26,8 @@ ReactDOM.render(
         <Routes>
           <Route path="/" element={<App />}>
             <Route path="/" element={<Home />} />
+            <Route path="e/:eventId/:eventName/:inviteCode" element={<Event />} />
             <Route path="e/:eventid" element={<EventCodePrompt />} />
-            <Route path="e/:eventId/:inviteCode" element={<Event />} />
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="my-events/:eventId" element={<EventAdmin />} />
             <Route path="my-events" element={<MyEvents />} />

@@ -1,34 +1,49 @@
 import axios, { AxiosResponse } from "axios";
 import React, { SyntheticEvent, useEffect, useState } from "react";
 import { useParams } from "react-router";
-import useApi from "../hooks/useApi";
+import useAdminApi from "../hooks/useAdminApi";
 import { useNavigate } from "react-router-dom";
 
-
 interface InviteCardProps {
-  eventId: string;
+  event: WithId<IEvent>;
   invite: WithId<IInvite>;
   invites: WithId<IInvite>[];
   setInvites: React.Dispatch<React.SetStateAction<WithId<IInvite>[]>>;
 }
 
 const InviteCard: React.FC<InviteCardProps> = ({
-  eventId,
+  event,
   invite,
   invites,
   setInvites,
 }) => {
-  const api = useApi();
+  const api = useAdminApi();
   const onClickRemove = () => {
     (async () => {
-      await api.delete(`events/${eventId}/invites/${invite.id}`);
+      await api.delete(`events/${event.id}/invites/${invite.id}`);
       setInvites(invites.filter((inv) => inv.id !== invite.id));
     })();
   };
 
+  const urlCharacterMapping: Record<string, string> = {
+    ä: "a",
+    ö: "o",
+    å: "å",
+    " ": "-",
+  };
+  const eventUrlName = event.name
+    .split("")
+    .map(char => char.toLowerCase())
+    .map((char) => urlCharacterMapping[char] || char)
+    .join("")
+    .slice(0, 30)
+
+  const mPort = window.location.port ? ":" + window.location.port : ""
+  const inviteUrl = `${window.location.protocol}//${window.location.hostname}${mPort}/e/${event.id}/${eventUrlName}/${invite.code}`;
+
   return (
     <div>
-      <code>{invite.code}</code>
+      <code>{inviteUrl}</code>
       <ol>
         {invite.invitees.map((invitee, index) => (
           <li key={index}>
@@ -49,10 +64,14 @@ interface InviteFormProps {
   setInvites: React.Dispatch<React.SetStateAction<WithId<IInvite>[]>>;
 }
 
-const InviteForm: React.FC<InviteFormProps> = ({ eventId, invites, setInvites }) => {
+const InviteForm: React.FC<InviteFormProps> = ({
+  eventId,
+  invites,
+  setInvites,
+}) => {
   const [newInvitee, setNewInvitee] = useState("");
   const [invitees, setInvitees] = useState<string[]>([]);
-  const api = useApi();
+  const api = useAdminApi();
 
   const onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
@@ -79,7 +98,7 @@ const InviteForm: React.FC<InviteFormProps> = ({ eventId, invites, setInvites })
       );
       const response = await api.get(`events/${eventId}/invites/${inviteId}`);
       setInvitees([]);
-      setInvites([...invites, response.data])
+      setInvites([...invites, response.data]);
     })();
   };
 
@@ -87,17 +106,17 @@ const InviteForm: React.FC<InviteFormProps> = ({ eventId, invites, setInvites })
     <div>
       <h2>New invite</h2>
       <form onSubmit={onSubmit} autoComplete="off">
-          <label htmlFor="name">Name</label>
-          <input
-            id="name"
-            type="text"
-            onChange={(e) => setNewInvitee(e.target.value)}
-            value={newInvitee}
-          />
+        <label htmlFor="name">Name</label>
+        <input
+          id="name"
+          type="text"
+          onChange={(e) => setNewInvitee(e.target.value)}
+          value={newInvitee}
+        />
         <button type="submit">Add</button>
         {invitees.map((invitee, i) => (
           <div key={i}>
-              {invitee} <sup onClick={onClickRemove(invitee)}>x</sup>
+            {invitee} <sup onClick={onClickRemove(invitee)}>x</sup>
           </div>
         ))}
         <button onClick={onClickCreateInvite}>Create Invite</button>
@@ -108,7 +127,7 @@ const InviteForm: React.FC<InviteFormProps> = ({ eventId, invites, setInvites })
 
 const EventAdmin: React.FC = () => {
   const { eventId } = useParams();
-  const api = useApi();
+  const api = useAdminApi();
   const [eventData, setEventData] = useState<IEvent | null>(null);
   const [invites, setInvites] = useState<WithId<IInvite>[]>([]);
   const navigate = useNavigate();
@@ -116,7 +135,7 @@ const EventAdmin: React.FC = () => {
   const onClickRemove = () => {
     (async () => {
       await api.delete(`/events/${eventId}`);
-      navigate('/my-events/')
+      navigate("/my-events/");
     })();
   };
 
@@ -139,9 +158,11 @@ const EventAdmin: React.FC = () => {
     })();
   }, [api, eventId, navigate]);
 
-  if (!eventId) {
+  if (!eventId || !eventData) {
     return null;
   }
+
+  const eventDataWithId = { id: Number(eventId), ...eventData };
 
   return (
     <>
@@ -151,19 +172,19 @@ const EventAdmin: React.FC = () => {
         {invites.map((invite) => (
           <InviteCard
             key={invite.id}
-            eventId={eventId}
+            event={eventDataWithId}
             invite={invite}
             invites={invites}
             setInvites={setInvites}
           />
         ))}
-      <InviteForm
-        eventId={eventId}
-        invites={invites}
-        setInvites={setInvites}
+        <InviteForm
+          eventId={eventId}
+          invites={invites}
+          setInvites={setInvites}
         />
-    <button onClick={onClickRemove}>Delete event</button>
-        </div>
+        <button onClick={onClickRemove}>Delete event</button>
+      </div>
     </>
   );
 };

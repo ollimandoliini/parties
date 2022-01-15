@@ -1,6 +1,6 @@
 import { Controller, useForm } from "react-hook-form";
 import React from "react";
-import useApi from "../hooks/useApi";
+import useAdminApi from "../hooks/useAdminApi";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../react-datepicker.css";
@@ -26,7 +26,7 @@ const CreteEvent = () => {
     control,
     formState: { errors },
   } = useForm();
-  const api = useApi();
+  const api = useAdminApi();
   const navigate = useNavigate();
 
   const onSubmit = async (newEvent: NewEvent) => {

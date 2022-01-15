@@ -16,6 +16,14 @@ interface IInvite {
 
 type Status = "Accepted" | "Tentative" | "Declined" | "Unknown";
 
+type EventInvite = IEventInvite;
+
+interface IEventInvite {
+  eventInfo: IEvent;
+  invitees: WithId<Invitee>[];
+}
+
+
 type Invitee = IInvitee;
 
 interface IInvitee {

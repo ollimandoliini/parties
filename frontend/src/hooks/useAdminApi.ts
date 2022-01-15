@@ -5,7 +5,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 
 const baseUrl = "/api/admin/";
 
-const useApi = () => {
+const useAdminApi = () => {
   const { getAccessTokenSilently, loginWithRedirect } = useAuth0();
   const api = useRef(
     axios.create({
@@ -47,4 +47,4 @@ const useApi = () => {
   return api.current;
 };
 
-export default useApi
+export default useAdminApi

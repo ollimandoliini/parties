@@ -2,7 +2,7 @@ import { AxiosResponse } from "axios";
 import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import useApi from "../hooks/useApi";
+import useAdminApi from "../hooks/useAdminApi";
 import "./MyAccount.scss";
 
 interface EventRowProps {
@@ -28,7 +28,7 @@ const EventRow: React.FC<EventRowProps> = ({
 };
 
 const MyAccount: React.FC = () => {
-  const api = useApi();
+  const api = useAdminApi();
   const [myEvents, setMyEvents] = useState<WithId<IEvent>[]>([]);
 
   useEffect(() => {
