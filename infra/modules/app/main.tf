@@ -120,7 +120,7 @@ resource "google_sql_database" "database" {
 }
 
 resource "google_sql_database_instance" "instance" {
-  name             = "events-app-database-instance"
+  name             = "events-app-database-instance-1"
   region           = var.region
   database_version = "POSTGRES_13"
   settings {
