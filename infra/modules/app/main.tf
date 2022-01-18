@@ -130,7 +130,7 @@ resource "google_sql_database_instance" "instance" {
       private_network = google_compute_network.private_network.id
     }
   }
-  deletion_protection = "false"
+  deletion_protection = "true"
   depends_on          = [google_service_networking_connection.private_vpc_connection]
 }
 
