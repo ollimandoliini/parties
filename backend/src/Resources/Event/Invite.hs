@@ -9,18 +9,18 @@ import           Control.Monad.IO.Class          (MonadIO (liftIO))
 import           Control.Monad.Reader            (asks)
 import           Data.Map                        (fromListWith, toList)
 import           Data.Text                       (Text, pack)
-import qualified Database                        as DB
 import           Database.Esqueleto.Experimental
+import qualified Database.Models                 as DB
 import qualified Database.Persist                as P
 import           Resources.Event.Invite.Invitee  (InviteesAPI, inviteesHandler)
 import           Servant
+import           Servant.Auth.Server             (ThrowAll (throwAll))
 import           System.Random                   (randomRIO)
 import           Types                           (Email, EventId (EventId),
                                                   Invite (..),
                                                   InviteId (InviteId),
                                                   Invitee (..), WithId (WithId))
 import           Utils                           (checkEventOrganizer, checked)
-import Servant.Auth.Server (ThrowAll(throwAll))
 
 
 -- INVITES
@@ -59,8 +59,8 @@ getInvite email eventId (InviteId inviteId) = do
           where_ $ invite ^. DB.InviteId ==. val (toSqlKey inviteId)
           return (invite :& invitee)
   result <- liftIO $ runSqlPool inviteQuery pool
-  case result of 
-    [] -> throwAll err404
+  case result of
+    []       -> throwAll err404
     invitees -> return $ head $ groupInvites invitees
 
 getEventInvites :: Email -> EventId -> AppT IO [WithId Invite]
@@ -81,7 +81,7 @@ getEventInvites = do
 
 
 groupInvites :: [Entity DB.Invite :& Maybe (Entity DB.Invitee)] -> [WithId Invite]
-groupInvites invites = uncurry dbInviteToApiInvite <$> toList (fromListWith (++) 
+groupInvites invites = uncurry dbInviteToApiInvite <$> toList (fromListWith (++)
   [(inviteEntity, maybe [] (\(Entity _ invitee)  -> [invitee]) mInvitee) | (inviteEntity :& mInvitee) <- invites])
 
 

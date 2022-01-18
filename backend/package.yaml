@@ -46,6 +46,7 @@ dependencies:
 - time
 - directory
 - wai-app-static
+- persistent-migration
 
 
 

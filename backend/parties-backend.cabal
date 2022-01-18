@@ -26,7 +26,8 @@ library
   exposed-modules:
       App
       Auth
-      Database
+      Database.Migrations
+      Database.Models
       Lib
       Resources.Event
       Resources.Event.Invite
@@ -54,6 +55,7 @@ library
     , mtl
     , password
     , persistent
+    , persistent-migration
     , persistent-postgresql
     , random
     , servant
@@ -90,6 +92,7 @@ executable parties-backend-exe
     , parties-backend
     , password
     , persistent
+    , persistent-migration
     , persistent-postgresql
     , random
     , servant
@@ -125,6 +128,7 @@ executable ts-def
     , parties-backend
     , password
     , persistent
+    , persistent-migration
     , persistent-postgresql
     , random
     , servant
@@ -167,6 +171,7 @@ test-suite parties-backend-test
     , parties-backend
     , password
     , persistent
+    , persistent-migration
     , persistent-postgresql
     , random
     , servant

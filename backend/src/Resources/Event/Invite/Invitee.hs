@@ -1,16 +1,18 @@
 {-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE DeriveGeneric    #-}
 {-# LANGUAGE RecordWildCards  #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators    #-}
-{-# LANGUAGE DeriveGeneric #-}
 module Resources.Event.Invite.Invitee where
 import           App                             (AppT, Config (dbPool))
 import           Control.Monad.Reader            (asks)
 import           Control.Monad.Trans             (liftIO)
+import           Data.Aeson                      (FromJSON)
 import           Data.Text                       (Text)
-import qualified Database                        as DB
 import           Database.Esqueleto.Experimental
+import qualified Database.Models                 as DB
 import qualified Database.Persist                as P
+import           GHC.Generics                    (Generic)
 import           Servant
 import           Types                           (Email, EventId,
                                                   InviteId (InviteId),
@@ -18,8 +20,6 @@ import           Types                           (Email, EventId,
                                                   InviteeId (InviteeId),
                                                   Status (..))
 import           Utils                           (checkEventOrganizer, or404)
-import GHC.Generics (Generic)
-import Data.Aeson (FromJSON)
 
 
 type InviteesAPI

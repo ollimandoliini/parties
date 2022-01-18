@@ -9,13 +9,13 @@ module Resources.Event where
 
 import           App
 import           Control.Monad.Reader            (MonadIO (liftIO), asks)
-import qualified Database                        as DB
 import           Database.Esqueleto.Experimental
+import qualified Database.Models                 as DB
 import qualified Database.Persist                as P
+import           Resources.Event.Invite          (InvitesAPI, invitesHandler)
 import           Servant
 import           Types
-import Resources.Event.Invite (InvitesAPI, invitesHandler)
-import Utils (checkEventOrganizer, or404)
+import           Utils                           (checkEventOrganizer, or404)
 
 
 -- EVENTS
@@ -55,6 +55,7 @@ getEvent email eventId@(EventId eventId') = do
     , description = DB.eventDescription event
     , startTime = DB.eventStartTime event
     , location = DB.eventLocation event
+    , invitesArePublic = DB.eventInvitesArePublic event
     }
 
 getEvents :: Email -> AppT IO [WithId Event]
@@ -89,7 +90,7 @@ deleteEvent email (EventId eventId) = do
   pool <- asks dbPool
   liftIO $ runSqlPool (P.delete (toSqlKey @DB.Event eventId)) pool
   return NoContent
-  
+
 dbEventToApiEvent :: Entity DB.Event -> WithId Event
 dbEventToApiEvent (Entity id' event) =
   let event' = Event {
@@ -97,6 +98,7 @@ dbEventToApiEvent (Entity id' event) =
     , description = DB.eventDescription event
     , startTime = DB.eventStartTime event
     , location = DB.eventLocation event
+    , invitesArePublic = DB.eventInvitesArePublic event
     }
   in WithId (fromSqlKey id') event'
 
@@ -107,4 +109,5 @@ apiEventToDbEvent Event{..} (Email email)= DB.Event {
   , eventOrganizer = email
   , eventStartTime = startTime
   , eventLocation = location
+  , eventInvitesArePublic = invitesArePublic
   }

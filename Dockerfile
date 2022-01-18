@@ -37,6 +37,7 @@ RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
 COPY --from=build /opt/build/bin .
+COPY --from=build /opt/build/migrations/ ./migrations
 COPY --from=frontend /frontend/build ./frontend
 
 # Execute your app 

@@ -5,6 +5,7 @@ interface IEvent {
   description: string;
   startTime: string;
   location: string;
+  invitesArePublic: boolean;
 }
 
 type Invite = IInvite;
@@ -22,7 +23,6 @@ interface IEventInvite {
   eventInfo: IEvent;
   invitees: WithId<Invitee>[];
 }
-
 
 type Invitee = IInvitee;
 

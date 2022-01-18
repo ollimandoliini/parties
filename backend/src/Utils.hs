@@ -1,14 +1,14 @@
 {-# LANGUAGE NamedFieldPuns #-}
 module Utils where
-import App (AppT, Config (dbPool))
-import qualified Database as DB
-import Database.Persist (Key, PersistStoreRead (get))
-import Database.Persist.Sql (toSqlKey, runSqlPool)
-import Control.Monad.Except (throwError)
-import Servant (err404)
-import Control.Monad.Reader (asks)
-import Control.Monad.Trans (liftIO)
-import Types (Email (Email), EventId (EventId))
+import           App                  (AppT, Config (dbPool))
+import           Control.Monad.Except (throwError)
+import           Control.Monad.Reader (asks)
+import           Control.Monad.Trans  (liftIO)
+import qualified Database.Models      as DB
+import           Database.Persist     (Key, PersistStoreRead (get))
+import           Database.Persist.Sql (runSqlPool, toSqlKey)
+import           Servant              (err404)
+import           Types                (Email (Email), EventId (EventId))
 
 checkEventOrganizer :: Email -> EventId -> AppT IO ()
 checkEventOrganizer (Email email) (EventId eventId) = do

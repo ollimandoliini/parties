@@ -66,13 +66,11 @@ interface EventParams {
 }
 
 const Event = () => {
-  const { eventId, inviteCode } = useParams<
-    keyof EventParams
-  >() as EventParams;
+  const { eventId, inviteCode } = useParams<keyof EventParams>() as EventParams;
   const api = usePublicApi();
   const [eventInvite, setEventInvite] = useState<EventInvite | null>(null);
+  const [otherInvitees, setOtherInvitees] = useState<WithId<Invitee>[]>([]);
   const navigate = useNavigate();
-
   useEffect(() => {
     (async () => {
       try {
@@ -80,6 +78,13 @@ const Event = () => {
           `event/${eventId}/invite-code/${inviteCode}`
         );
         setEventInvite(eventInviteResponse.data);
+        if (eventInvite?.eventInfo.invitesArePublic) {
+          const otherInviteesResponse: AxiosResponse<WithId<Invitee>[]> =
+            await api.get(
+              `event/${eventId}/invite-code/${inviteCode}/invitees`
+            );
+          setOtherInvitees(otherInviteesResponse.data);
+        }
       } catch (error: unknown) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
           navigate("/404");
@@ -88,11 +93,20 @@ const Event = () => {
         }
       }
     })();
-  }, [api, eventId, inviteCode, navigate]);
+  }, [
+    api,
+    eventId,
+    inviteCode,
+    navigate,
+    eventInvite?.eventInfo.invitesArePublic,
+  ]);
 
   if (!eventInvite) {
     return <></>;
   }
+  const eventInviteInviteeIds = eventInvite.invitees.map(
+    (invitee) => invitee.id
+  );
 
   return (
     <>
@@ -117,6 +131,18 @@ const Event = () => {
           />
         ))}
       </div>
+      {!(otherInvitees.length === 0) && (
+        <div>
+          <h3>Other invitees</h3>
+          <ul>
+            {otherInvitees
+              .filter((invitee) => !eventInviteInviteeIds.includes(invitee.id))
+              .map((invitee) => (
+                <div key={invitee.id}>{invitee.name}</div>
+              ))}
+          </ul>
+        </div>
+      )}
     </>
   );
 };

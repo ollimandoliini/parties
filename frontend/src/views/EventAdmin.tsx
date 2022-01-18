@@ -31,6 +31,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
     å: "å",
     " ": "-",
   };
+
   const eventUrlName = event.name
     .split("")
     .map(char => char.toLowerCase())
@@ -43,7 +44,7 @@ const InviteCard: React.FC<InviteCardProps> = ({
 
   return (
     <div>
-      <code>{inviteUrl}</code>
+      <p>{inviteUrl}</p>
       <ol>
         {invite.invitees.map((invitee, index) => (
           <li key={index}>

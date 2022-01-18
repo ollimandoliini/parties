@@ -1,24 +1,25 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE DuplicateRecordFields      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TemplateHaskell            #-}
 
 module Types where
 
-import Data.Aeson (FromJSON (..), ToJSON(..), object, (.=), Value (Object, Null))
-import Data.Text (Text)
-import GHC.Generics (Generic)
-import Data.Aeson.TypeScript.TH (HasJSONOptions (getJSONOptions))
-import Data.Aeson.TH (defaultOptions)
-import Data.Time (UTCTime)
-import Database.Persist.TH (derivePersistField)
-import Servant (FromHttpApiData)
-import Data.Int (Int64)
-import Data.HashMap.Strict (insert)
+import           Data.Aeson               (FromJSON (..), ToJSON (..),
+                                           Value (Null, Object), object, (.=))
+import           Data.Aeson.TH            (defaultOptions)
+import           Data.Aeson.TypeScript.TH (HasJSONOptions (getJSONOptions))
+import           Data.HashMap.Strict      (insert)
+import           Data.Int                 (Int64)
+import           Data.Text                (Text)
+import           Data.Time                (UTCTime)
+import           Database.Persist.TH      (derivePersistField)
+import           GHC.Generics             (Generic)
+import           Servant                  (FromHttpApiData)
 
 data WithId a = WithId Int64 a
   deriving (Show, Eq)
@@ -33,10 +34,11 @@ instance ToJSON a => ToJSON (WithId a) where
       ]
 
 data Event = Event
-  { name :: Text
-    , description :: Text
-    , startTime :: UTCTime
-    , location :: Text
+  { name               :: Text
+    , description      :: Text
+    , startTime        :: UTCTime
+    , location         :: Text
+    , invitesArePublic :: Bool
   }
   deriving stock (Show, Eq, Generic)
   deriving anyclass (FromJSON, ToJSON)
@@ -58,7 +60,7 @@ newtype EventId = EventId
 
 
 data Invite = Invite {
-  code :: Text
+  code       :: Text
   , invitees :: [Invitee]
 } deriving (Show, Eq, Generic)
   deriving anyclass (FromJSON, ToJSON)
@@ -71,7 +73,7 @@ newtype InviteId = InviteId
 
 
 data Invitee = Invitee {
-  name :: Text
+  name     :: Text
   , status :: Status
 } deriving (Show, Eq, Generic)
   deriving anyclass (FromJSON, ToJSON)
@@ -106,7 +108,7 @@ instance HasJSONOptions Status where
 -- PUBLIC
 
 data EventInvite = EventInvite {
-    eventInfo :: Event
+    eventInfo  :: Event
     , invitees :: [WithId Invitee]
 } deriving stock Generic
   deriving anyclass (ToJSON)

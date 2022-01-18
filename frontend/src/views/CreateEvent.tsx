@@ -13,6 +13,7 @@ interface NewEvent {
   description: string;
   location: string;
   startTime: Date;
+  invitesArePublic: boolean;
 }
 
 interface Id {
@@ -96,6 +97,14 @@ const CreteEvent = () => {
             />
           )}
         />
+        <div>
+          <label htmlFor="location">Show other invites to invitees</label>
+          <input
+            id="invites-are-public"
+            type="checkbox"
+            {...register("invitesArePublic")}
+          />
+        </div>
       <button type="submit">
         Submit
       </button>

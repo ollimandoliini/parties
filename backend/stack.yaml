@@ -36,7 +36,8 @@ packages:
 #
 
 #
-# extra-deps:
+extra-deps:
+- persistent-migration-0.3.0@sha256:1b28e22c2eeff694eed6835299b3a80104772d5d2262e6dbfa5c47d9e7594f59,3433
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

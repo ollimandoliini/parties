@@ -15,7 +15,6 @@ import           App
 import           Control.Monad.Logger                      (runStdoutLoggingT)
 import           Control.Monad.Reader                      (runReaderT)
 import qualified Data.ByteString                           as BS
-import           Database                                  (doMigrations)
 import           Database.Persist.Postgresql               (ConnectionPool,
                                                             createPostgresqlPool)
 import           Database.Persist.Sql                      (runSqlPool)
@@ -31,17 +30,19 @@ import           Servant.Auth.Server
 
 import           Crypto.JOSE                               (JWKSet)
 import           Crypto.JOSE.JWK                           (JWK)
+import           Database.Migrations                       (doMigrations)
+import           GHC.IO.Handle                             (BufferMode (LineBuffering))
+import           GHC.IO.Handle.FD                          (stdout)
 import           Network.HTTP.Client.Conduit               (responseBody)
 import           Network.HTTP.Simple                       (httpJSON)
+import           Network.Wai.Application.Static
+import           Resources.Public
 import           Servant.Auth.Server.Internal.AddSetCookie (AddSetCookieApi,
                                                             AddSetCookieApiVerb)
+import           System.IO                                 (hSetBuffering)
 import           Types                                     (Email (Email))
-import Resources.Public
-import System.IO (hSetBuffering)
-import GHC.IO.Handle (BufferMode(LineBuffering))
-import GHC.IO.Handle.FD (stdout)
-import WaiAppStatic.Types (LookupResult(..), unsafeToPiece)
-import Network.Wai.Application.Static
+import           WaiAppStatic.Types                        (LookupResult (..),
+                                                            unsafeToPiece)
 
 type instance AddSetCookieApi (NoContentVerb 'DELETE) = Verb 'DELETE 204 '[JSON] (AddSetCookieApiVerb NoContent)
 type instance AddSetCookieApi (NoContentVerb 'PUT) = Verb 'PUT 204 '[JSON] (AddSetCookieApiVerb NoContent)
@@ -58,7 +59,7 @@ type APIAndFrontend = API :<|> Raw
 
 protected :: AuthResult JWTClaim -> ServerT Admin (AppT IO)
 protected (Authenticated claim) = eventsHandler (Email $ claimEmail claim)
-protected _ = throwAll err401
+protected _                     = throwAll err401
 
 unprotected :: ServerT Public (AppT IO)
 unprotected
@@ -118,7 +119,7 @@ getJwk = responseBody <$> httpJSON jwkUrl
 startApp :: IO ()
 startApp = do
   hSetBuffering stdout LineBuffering
-  !dbConnectionString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString  
+  !dbConnectionString <- lookupSetting "DB_CONNECTION_STRING" defaultConnectionString
   !key <- generateKey
   !jwkSet <- getJwk
   pool <- makePool dbConnectionString
@@ -134,3 +135,5 @@ lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env default' = do
   p <- lookupEnv env
   return $ maybe default' read p
+
+
