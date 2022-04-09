@@ -31,7 +31,7 @@ RUN npm run build
 FROM debian:buster as deploy
 
 RUN apt-get update && \
-    apt-get install --yes libpq-dev ca-certificates
+    apt-get install --yes libpq-dev ca-certificates libnuma-dev
 
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
