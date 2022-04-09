@@ -44,3 +44,12 @@ cd frontend
 npm install
 npm start
 ```
+
+
+## Misc
+
+#### Generating TypeScript types from Haskell types
+
+```bash
+./generate-types.sh
+```
