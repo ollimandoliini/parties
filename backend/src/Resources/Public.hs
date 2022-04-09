@@ -62,7 +62,7 @@ getEventInvite (EventId eventId) (InviteCode inviteCode) = do
     (Entity inviteId _) <- getInvite (EventId eventId) (InviteCode inviteCode)
     let eventQuery = selectOne $ do
             event <- from $ table @DB.Event
-            where_ ((event ^. DB.EventId) ==. val (toSqlKey $ eventId))
+            where_ ((event ^. DB.EventId) ==. val (toSqlKey eventId))
             return event
     (Entity _ DB.Event{..}) <- or404 . liftIO $ runSqlPool eventQuery pool
     let inviteesQuery = select $ do

@@ -51,9 +51,11 @@ type instance AddSetCookieApi (NoContentVerb 'PUT) = Verb 'PUT 204 '[JSON] (AddS
 type Admin = "api" :> "admin" :> "events" :> EventsAPI
 type Public = "api" :> "public" :> PublicAPI
 
+
 type API
   = Public
   :<|> (Auth '[JWT] JWTClaim :> Admin)
+
 
 type APIAndFrontend = API :<|> Raw
 
@@ -61,13 +63,16 @@ protected :: AuthResult JWTClaim -> ServerT Admin (AppT IO)
 protected (Authenticated claim) = eventsHandler (Email $ claimEmail claim)
 protected _                     = throwAll err401
 
+
 unprotected :: ServerT Public (AppT IO)
 unprotected
   = publicApiHandler
 
+
 server :: ServerT APIAndFrontend (AppT IO)
 server
   = (unprotected :<|> protected) :<|> serveFrontEnd "frontend"
+
 
 serveFrontEnd :: String -> ServerT Raw (AppT IO)
 serveFrontEnd rootDirectory =
@@ -85,22 +90,26 @@ serveFrontEnd rootDirectory =
 convertApp :: Config -> AppT IO a -> Handler a
 convertApp cfg application = Handler $ runReaderT (runApp application) cfg
 
-api' :: Proxy APIAndFrontend
-api' = Proxy
+
+api :: Proxy APIAndFrontend
+api = Proxy
+
 
 context :: Proxy '[CookieSettings, JWTSettings]
 context = Proxy
 
+
 appToServer :: Config -> Server APIAndFrontend
 appToServer appCfg =
-  hoistServerWithContext api' context (convertApp appCfg) server
+  hoistServerWithContext api context (convertApp appCfg) server
 
 
 app :: Config -> JWK -> JWKSet -> Application
 app cfg key jwkSet =
   let jwtCfg = (defaultJWTSettings key) {validationKeys = jwkSet}
       cfg' = defaultCookieSettings :. jwtCfg :. EmptyContext
-  in serveWithContext api' cfg' (appToServer cfg)
+  in serveWithContext api cfg' (appToServer cfg)
+
 
 debug :: Middleware
 debug application req resp = do
@@ -108,13 +117,16 @@ debug application req resp = do
   print (requestHeaders req)
   application req resp
 
+
 makePool :: BS.ByteString -> IO ConnectionPool
-makePool dbString = runStdoutLoggingT (createPostgresqlPool dbString 1)
+makePool dbString = runStdoutLoggingT (createPostgresqlPool dbString 8)
+
 
 getJwk :: IO JWKSet
 getJwk = responseBody <$> httpJSON jwkUrl
   where
     jwkUrl = "https://dev-7xdjfw10.eu.auth0.com/.well-known/jwks.json"
+
 
 startApp :: IO ()
 startApp = do
@@ -130,6 +142,7 @@ startApp = do
   run port (debug $ app cfg key jwkSet)
   where
     defaultConnectionString = "host=localhost port=5432 user=user password=password dbname=parties"
+
 
 lookupSetting :: Read a => String -> a -> IO a
 lookupSetting env default' = do
