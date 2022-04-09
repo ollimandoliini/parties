@@ -13,7 +13,7 @@ import           Data.Aeson               (FromJSON (..), ToJSON (..),
                                            Value (Null, Object), object, (.=))
 import           Data.Aeson.TH            (defaultOptions)
 import           Data.Aeson.TypeScript.TH (HasJSONOptions (getJSONOptions))
-import           Data.HashMap.Strict      (insert)
+import           Data.Aeson.KeyMap      (insert)
 import           Data.Int                 (Int64)
 import           Data.Text                (Text)
 import           Data.Time                (UTCTime)

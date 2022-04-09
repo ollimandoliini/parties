@@ -1,5 +1,5 @@
 ## BACKEND
-FROM haskell:8.10.7 as build
+FROM haskell:9.0.2 as build
 
 RUN apt-get update && \
     apt-get install --yes libpq-dev
