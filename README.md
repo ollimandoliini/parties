@@ -2,6 +2,8 @@
 
 A simple web application for creating events, invites and keeping track of who will be participating.
 
+https://invitee.to/
+
 ## Local development
 
 ### Requirements
