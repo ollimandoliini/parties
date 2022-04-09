@@ -26,7 +26,7 @@ const CreteEvent = () => {
     register,
     control,
     formState: { errors },
-  } = useForm();
+  } = useForm<NewEvent>();
   const api = useAdminApi();
   const navigate = useNavigate();
 
